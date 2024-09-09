@@ -26,10 +26,7 @@ type Bid struct {
 	Amount uint64
 }
 
-var (
-	auctionList []*Auction
-	currentTime time.Time
-)
+var auctionList []*Auction
 
 // NewAuction creates a new auction
 func NewAuction(
@@ -54,15 +51,19 @@ func NewAuction(
 
 // AddBid adds a new bid to the auction
 func (a *Auction) AddBid(bidder std.Address, amount uint64) error {
-	if now().Before(a.Begin) {
+	/*if time.Now().Before(a.Begin) {
+		ufmt.Println("auction: AddBid: auction has not started yet")
 		return ufmt.Errorf("auction: AddBid: auction has not started yet")
 	}
-	if now().After(a.End) {
+	ufmt.Println("auction: AddBid: auction has not started yet3")
+	if time.Now().After(a.End) {
+		ufmt.Println("auction:1")
 		return ufmt.Errorf("auction: AddBid: auction has already ended")
-	}
-	if amount <= a.Price {
+	}*/
+	/*if amount <= a.Price {
+		ufmt.Println("auction2")
 		return ufmt.Errorf("auction: AddBid: bid amount must be higher than the current highest bid")
-	}
+	}*/
 	bid := &Bid{Bidder: bidder, Amount: amount}
 	a.Bids = append(a.Bids, bid)
 	a.Price = amount
@@ -80,7 +81,7 @@ func (a *Auction) EndAuction(caller std.Address) error {
 	if caller != a.Owner {
 		return ufmt.Errorf("auction: EndAuction: only the owner can end the auction")
 	}
-	if now().Before(a.End) {
+	if time.Now().Before(a.End) {
 		return ufmt.Errorf("auction: EndAuction: auction cannot end before the end time")
 	}
 	if a.State == "closed" {
@@ -95,17 +96,4 @@ func (a *Auction) EndAuction(caller std.Address) error {
 	winner := a.Bids[len(a.Bids)-1].Bidder
 	std.Emit("AuctionEnded", "winner", winner.String(), "amount", strconv.FormatUint(highestBid, 10))
 	return nil
-}
-
-// SetCurrentTime sets the current time for testing purposes
-func SetCurrentTime(t time.Time) {
-	currentTime = t
-}
-
-// now returns the current time, allowing for mocking in tests
-func now() time.Time {
-	if !currentTime.IsZero() {
-		return currentTime
-	}
-	return time.Now()
 }
