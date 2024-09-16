@@ -51,19 +51,24 @@ func NewAuction(
 
 // AddBid adds a new bid to the auction
 func (a *Auction) AddBid(bidder std.Address, amount uint64) error {
-	/*if time.Now().Before(a.Begin) {
+	currentTime := time.Now() // Ajouter un suivi du temps actuel
+	if a.State == "closed" {
+		ufmt.Println("auction: AddBid: auction is closed")
+		return ufmt.Errorf("auction: AddBid: auction is closed")
+	}
+	// Comparaison plus précise avec Before et After
+	if currentTime.Before(a.Begin) {
 		ufmt.Println("auction: AddBid: auction has not started yet")
 		return ufmt.Errorf("auction: AddBid: auction has not started yet")
 	}
-	ufmt.Println("auction: AddBid: auction has not started yet3")
-	if time.Now().After(a.End) {
-		ufmt.Println("auction:1")
+	if currentTime.After(a.End) {
+		ufmt.Println("auction: AddBid: auction has already ended")
 		return ufmt.Errorf("auction: AddBid: auction has already ended")
-	}*/
-	/*if amount <= a.Price {
-		ufmt.Println("auction2")
+	}
+	if amount <= a.Price {
+		ufmt.Println("auction: AddBid: bid amount must be higher than the current highest bid")
 		return ufmt.Errorf("auction: AddBid: bid amount must be higher than the current highest bid")
-	}*/
+	}
 	bid := &Bid{Bidder: bidder, Amount: amount}
 	a.Bids = append(a.Bids, bid)
 	a.Price = amount
