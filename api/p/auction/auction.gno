@@ -51,7 +51,7 @@ func NewAuction(
 
 // AddBid adds a new bid to the auction
 func (a *Auction) AddBid(bidder std.Address, amount uint64) error {
-	currentTime := time.Now() // Ajouter un suivi du temps actuel
+	currentTime := time.Now()
 	if a.State == "closed" {
 		ufmt.Println("auction: AddBid: auction is closed")
 		return ufmt.Errorf("auction: AddBid: auction is closed")

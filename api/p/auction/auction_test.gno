@@ -58,7 +58,7 @@ func TestAddBid(t *testing.T) {
 	}
 
 	// Test successful bid after auction begins (manually adjusting the time)
-	auction.Begin = time.Now().Add(-1 * time.Second) // Simuler le début de l'enchère
+	auction.Begin = time.Now().Add(-1 * time.Second)
 	err = auction.AddBid(bidder1, 200)
 	if err != nil {
 		t.Fatalf("expected no error, got '%v'", err)
@@ -131,13 +131,13 @@ func TestEndAuction(t *testing.T) {
 	}
 
 	// Test ending auction with no bids after it ends
-	auction.End = time.Now().Add(-1 * time.Second) // Simuler la fin de l'enchère
+	auction.End = time.Now().Add(-1 * time.Second)
 	err = auction.EndAuction(owner)
 	if err == nil || err.Error() != "auction: EndAuction: auction ended with no bids" {
 		t.Fatalf("expected error 'auction ended with no bids', got '%v'", err)
 	}
 
-	// Simuler la fin de l'enchère avec un gagnant
+	// Simulate the end of the auction with a winner
 	auction.Bids = append(auction.Bids, &Bid{Bidder: bidder, Amount: 150})
 	err = auction.EndAuction(owner)
 	if err != nil {
