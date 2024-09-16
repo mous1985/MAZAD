@@ -56,7 +56,7 @@ func (a *Auction) AddBid(bidder std.Address, amount uint64) error {
 		ufmt.Println("auction: AddBid: auction is closed")
 		return ufmt.Errorf("auction: AddBid: auction is closed")
 	}
-	// Comparaison plus précise avec Before et After
+
 	if currentTime.Before(a.Begin) {
 		ufmt.Println("auction: AddBid: auction has not started yet")
 		return ufmt.Errorf("auction: AddBid: auction has not started yet")
