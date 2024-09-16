@@ -164,11 +164,39 @@ func TestEndAuction(t *testing.T) {
 
 	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice)
 
-	ufmt.Println("Owner of the auction:", auction.Ownable.Owner())
-	ufmt.Println("Attempting to end auction as owner...")
+	// Set the original caller as the owner for this test
+	std.TestSetOrigCaller(owner)
 
-	err := auction.EndAuction(owner)
+	err := auction.EndAuction()
 	if err == nil || err.Error() != "auction: EndAuction: auction cannot end before the end time" {
 		t.Fatalf("expected error 'auction cannot end before the end time', got '%v'", err)
+	}
+
+	// Test ending the auction with no bids after it has ended
+	auction.End = time.Now().Add(-1 * time.Second)
+	err = auction.EndAuction()
+	if err == nil || err.Error() != "auction: EndAuction: auction ended with no bids" {
+		t.Fatalf("expected error 'auction ended with no bids', got '%v'", err)
+	}
+
+	// Simulate ending the auction with a winner
+	auction.Bids = append(auction.Bids, &Bid{Bidder: bidder, Amount: 150})
+	err = auction.EndAuction()
+	if err != nil {
+		t.Fatalf("expected no error, got '%v'", err)
+	}
+	if auction.State != "closed" {
+		t.Fatalf("expected auction state to be 'closed', got '%s'", auction.State)
+	}
+	if auction.Bids[len(auction.Bids)-1].Bidder != bidder {
+		t.Fatalf("expected winner to be 'bidder', got '%s'", auction.Bids[len(auction.Bids)-1].Bidder)
+	}
+
+	// Set the original caller as a non-owner and test ending the auction
+	std.TestSetOrigCaller(nonOwner)
+
+	err = auction.EndAuction()
+	if err == nil || err.Error() != "auction: EndAuction: only the owner can end the auction" {
+		t.Fatalf("expected error 'only the owner can end the auction', got '%v'", err)
 	}
 }
