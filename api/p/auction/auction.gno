@@ -74,6 +74,26 @@ func (a *Auction) AddBid(bidder std.Address, amount std.Coin) error {
 	return nil
 }
 
+// GetPaginatedBids retourne une liste paginée des bids.
+func (a *Auction) GetPaginatedBids(page, pageSize int) ([]*Bid, error) {
+	if page <= 0 || pageSize <= 0 {
+		return nil, ufmt.Errorf("invalid pagination parameters")
+	}
+
+	totalBids := len(a.Bids)
+	start := (page - 1) * pageSize
+	if start >= totalBids {
+		return nil, ufmt.Errorf("page exceeds total number of bids")
+	}
+
+	end := start + pageSize
+	if end > totalBids {
+		end = totalBids
+	}
+
+	return a.Bids[start:end], nil
+}
+
 // EndAuction ends the auction
 func (a *Auction) EndAuction() error {
 	// Checks if the caller is the owner

@@ -54,7 +54,7 @@ func TestAddBid(t *testing.T) {
 		t.Fatalf("expected error 'auction has not started yet', got '%v'", err)
 	}
 
-	// Test successful bid after auction begins (manually adjusting the time)
+	// Test successful bid after auction begins
 	auction.Begin = time.Now().Add(-1 * time.Second)
 	err = auction.AddBid(bidder1, std.NewCoin("default", 200))
 	if err != nil {
@@ -91,6 +91,54 @@ func TestAddBid(t *testing.T) {
 	err = auction.AddBid(bidder1, std.NewCoin("default", 250))
 	if err == nil || err.Error() != "auction: AddBid: bid amount must be higher than the current highest bid" {
 		t.Fatalf("expected error 'bid amount must be higher than the current highest bid', got '%v'", err)
+	}
+}
+
+func TestGetPaginatedBids(t *testing.T) {
+	owner := std.Address("owner")
+	begin := time.Now().Add(-1 * time.Hour)
+	end := time.Now().Add(1 * time.Hour)
+	minPrice := std.NewCoin("default", 100)
+
+	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice)
+
+	// Add some bids
+	bidder1 := std.Address("bidder1")
+	bidder2 := std.Address("bidder2")
+	bidder3 := std.Address("bidder3")
+
+	auction.AddBid(bidder1, std.NewCoin("default", 150))
+	auction.AddBid(bidder2, std.NewCoin("default", 200))
+	auction.AddBid(bidder3, std.NewCoin("default", 250))
+
+	// Test the first page with a page size of 2
+	bids, err := auction.GetPaginatedBids(1, 2)
+	if err != nil {
+		t.Fatalf("expected no error, got '%v'", err)
+	}
+	if len(bids) != 2 {
+		t.Fatalf("expected 2 bids, got %d", len(bids))
+	}
+
+	// Test the second page with a page size de 2
+	bids, err = auction.GetPaginatedBids(2, 2)
+	if err != nil {
+		t.Fatalf("expected no error, got '%v'", err)
+	}
+	if len(bids) != 1 {
+		t.Fatalf("expected 1 bid, got %d", len(bids))
+	}
+
+	// Test invalid page
+	bids, err = auction.GetPaginatedBids(3, 2)
+	if err == nil || err.Error() != "page exceeds total number of bids" {
+		t.Fatalf("expected error 'page exceeds total number of bids', got '%v'", err)
+	}
+
+	// Test for invalid pagination parameters
+	_, err = auction.GetPaginatedBids(0, 2)
+	if err == nil || err.Error() != "invalid pagination parameters" {
+		t.Fatalf("expected error 'invalid pagination parameters', got '%v'", err)
 	}
 }
 

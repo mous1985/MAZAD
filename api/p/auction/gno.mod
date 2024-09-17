@@ -1,4 +1,4 @@
-module gno.land/r/demo/auction
+module gno.land/p/demo/auction
 
 require (
 	gno.land/p/demo/ownable v0.0.0-latest
