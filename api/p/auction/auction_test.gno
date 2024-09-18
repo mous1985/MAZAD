@@ -4,10 +4,12 @@ import (
 	"std"
 	"testing"
 	"time"
+
+	"gno.land/p/demo/testutils"
 )
 
 func TestNewAuction(t *testing.T) {
-	owner := std.Address("owner")
+	owner := testutils.TestAddress("owner")
 	begin := time.Now().Add(1 * time.Hour)
 	end := time.Now().Add(24 * time.Hour)
 	minPrice := std.NewCoin("testcoin", 100) // Utilisation de std.Coin
@@ -38,9 +40,9 @@ func TestNewAuction(t *testing.T) {
 }
 
 func TestAddBid(t *testing.T) {
-	owner := std.Address("owner")
-	bidder1 := std.Address("bidder1")
-	bidder2 := std.Address("bidder2")
+	owner := testutils.TestAddress("owner")
+	bidder1 := testutils.TestAddress("bidder1")
+	bidder2 := testutils.TestAddress("bidder2")
 	begin := time.Now().Add(1 * time.Hour)
 	end := time.Now().Add(24 * time.Hour)
 	minPrice := std.NewCoin("default", 100)
@@ -95,7 +97,7 @@ func TestAddBid(t *testing.T) {
 }
 
 func TestGetPaginatedBids(t *testing.T) {
-	owner := std.Address("owner")
+	owner := testutils.TestAddress("owner")
 	begin := time.Now().Add(-1 * time.Hour)
 	end := time.Now().Add(1 * time.Hour)
 	minPrice := std.NewCoin("default", 100)
@@ -103,9 +105,9 @@ func TestGetPaginatedBids(t *testing.T) {
 	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice)
 
 	// Add some bids
-	bidder1 := std.Address("bidder1")
-	bidder2 := std.Address("bidder2")
-	bidder3 := std.Address("bidder3")
+	bidder1 := testutils.TestAddress("bidder1")
+	bidder2 := testutils.TestAddress("bidder2")
+	bidder3 := testutils.TestAddress("bidder3")
 
 	auction.AddBid(bidder1, std.NewCoin("default", 150))
 	auction.AddBid(bidder2, std.NewCoin("default", 200))
@@ -143,9 +145,9 @@ func TestGetPaginatedBids(t *testing.T) {
 }
 
 func TestEndAuction(t *testing.T) {
-	owner := std.Address("owner")
-	nonOwner := std.Address("nonOwner")
-	bidder := std.Address("bidder")
+	owner := testutils.TestAddress("owner")
+	nonOwner := testutils.TestAddress("nonOwner")
+	bidder := testutils.TestAddress("bidder")
 	begin := time.Now().Add(1 * time.Hour)
 	end := time.Now().Add(24 * time.Hour)
 	minPrice := std.NewCoin("token", 100)
@@ -155,35 +157,39 @@ func TestEndAuction(t *testing.T) {
 	// Set the original caller as the owner for this test
 	std.TestSetOrigCaller(owner)
 
-	err := auction.EndAuction()
+	// Attempt to end the auction before the end time
+	_, _, err := auction.EndAuction()
 	if err == nil || err.Error() != "auction: EndAuction: auction cannot end before the end time" {
 		t.Fatalf("expected error 'auction cannot end before the end time', got '%v'", err)
 	}
 
-	// Test ending the auction with no bids after it has ended
+	// Simulate the end of the auction with no bids after the auction has ended
 	auction.End = time.Now().Add(-1 * time.Second)
-	err = auction.EndAuction()
+	_, _, err = auction.EndAuction()
 	if err == nil || err.Error() != "auction: EndAuction: auction ended with no bids" {
 		t.Fatalf("expected error 'auction ended with no bids', got '%v'", err)
 	}
 
 	// Simulate ending the auction with a winner
 	auction.Bids = append(auction.Bids, &Bid{Bidder: bidder, Amount: 150})
-	err = auction.EndAuction()
+	winner, highestBid, err := auction.EndAuction()
 	if err != nil {
 		t.Fatalf("expected no error, got '%v'", err)
 	}
 	if auction.State != "closed" {
 		t.Fatalf("expected auction state to be 'closed', got '%s'", auction.State)
 	}
-	if auction.Bids[len(auction.Bids)-1].Bidder != bidder {
-		t.Fatalf("expected winner to be 'bidder', got '%s'", auction.Bids[len(auction.Bids)-1].Bidder)
+	if winner != bidder {
+		t.Fatalf("expected winner to be '%s', got '%s'", bidder, winner)
+	}
+	if !highestBid.IsEqual(std.NewCoin("token", 150)) {
+		t.Fatalf("expected highest bid to be '150 token', got '%s'", highestBid.String())
 	}
 
 	// Set the original caller as a non-owner and test ending the auction
 	std.TestSetOrigCaller(nonOwner)
 
-	err = auction.EndAuction()
+	_, _, err = auction.EndAuction()
 	if err == nil || err.Error() != "auction: EndAuction: only the owner can end the auction" {
 		t.Fatalf("expected error 'only the owner can end the auction', got '%v'", err)
 	}

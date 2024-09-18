@@ -18,6 +18,7 @@ type Auction struct {
 	End         time.Time
 	Price       std.Coin
 	Bids        []*Bid
+	Deposits    map[std.Address]std.Coin
 	State       string // "upcoming", "ongoing", or "closed"
 }
 
@@ -26,8 +27,6 @@ type Bid struct {
 	Bidder std.Address
 	Amount uint64
 }
-
-var auctionList []*Auction
 
 // NewAuction creates a new auction
 func NewAuction(
@@ -52,11 +51,10 @@ func NewAuction(
 
 func (a *Auction) AddBid(bidder std.Address, amount std.Coin) error {
 	currentTime := time.Now()
+
 	if a.State == "closed" {
-		ufmt.Println("auction: AddBid: auction is closed")
 		return ufmt.Errorf("auction: AddBid: auction is closed")
 	}
-
 	if currentTime.Before(a.Begin) {
 		return ufmt.Errorf("auction: AddBid: auction has not started yet")
 	}
@@ -67,10 +65,10 @@ func (a *Auction) AddBid(bidder std.Address, amount std.Coin) error {
 		return ufmt.Errorf("auction: AddBid: bid amount must be higher than the current highest bid")
 	}
 
+	// Add the bid and update the price
 	bid := &Bid{Bidder: bidder, Amount: uint64(amount.Amount)}
 	a.Bids = append(a.Bids, bid)
 	a.Price = amount
-	std.Emit("BidPlaced", "auction", a.Title, "bidder", bidder.String(), "amount", strconv.FormatInt(amount.Amount, 10))
 	return nil
 }
 
@@ -95,29 +93,21 @@ func (a *Auction) GetPaginatedBids(page, pageSize int) ([]*Bid, error) {
 }
 
 // EndAuction ends the auction
-func (a *Auction) EndAuction() error {
-	// Checks if the caller is the owner
-	err := a.Ownable.CallerIsOwner()
-	if err != nil {
-		return ufmt.Errorf("auction: EndAuction: only the owner can end the auction")
-	}
-
-	// Checks if the auction can be closed
+func (a *Auction) EndAuction() (std.Address, std.Coin, error) {
 	if time.Now().Before(a.End) {
-		return ufmt.Errorf("auction: EndAuction: auction cannot end before the end time")
+		return "", std.Coin{}, ufmt.Errorf("auction: EndAuction: auction cannot end before the end time")
 	}
 	if a.State == "closed" {
-		return ufmt.Errorf("auction: EndAuction: auction is already closed")
+		return "", std.Coin{}, ufmt.Errorf("auction: EndAuction: auction is already closed")
 	}
 	if len(a.Bids) == 0 {
-		std.Emit("AuctionEndedNoBids", "auction", a.Title)
-		return ufmt.Errorf("auction: EndAuction: auction ended with no bids")
+		a.State = "closed"
+		return "", std.Coin{}, ufmt.Errorf("auction: EndAuction: auction ended with no bids")
 	}
 
-	// Close auction
+	// Close the auction and return the winner and the highest bid
 	a.State = "closed"
-	// highestBid := a.Price
+	highestBid := a.Price
 	winner := a.Bids[len(a.Bids)-1].Bidder
-	std.Emit("AuctionEnded", "winner", winner.String(), "amount", strconv.FormatInt(a.Price.Amount, 10))
-	return nil
+	return winner, highestBid, nil
 }
