@@ -51,7 +51,7 @@ func AddBid(id int, amount std.Coin) string {
 	// Get Banker instance for handling transactions
 	banker := std.GetBanker(std.BankerTypeOrigSend)
 
-	// Check if the bidder already has a deposit in the global realm
+	// Check if the bidder already has a deposit in the  realm
 	existingDeposit, exists := globalDeposits[caller]
 	if exists {
 		// Calculate additional deposit required
@@ -116,10 +116,10 @@ func Render(path string) string {
 // renderHomepage renders the homepage with links to different sections of the auction system
 func renderHomepage(res *mux.ResponseWriter, req *mux.Request) {
 	var b bytes.Buffer
-	b.WriteString("<h1><center>Auction Home</center></h1>\n\n")
-	b.WriteString("<h2><a href='/r/demo/auction:create/'>Create New Auction</a></h2>\n\n")
-	b.WriteString("<h2><a href='/r/demo/auction:upcoming/'>Upcoming Auctions</a></h2>\n\n")
-	b.WriteString("<h2><a href='/r/demo/auction:ongoing/'>Ongoing Auctions</a></h2>\n\n")
+	b.WriteString("# Homepage\n\n")
+	b.WriteString("## <a href='/r/demo/auction:create/'>Create New Auction</a>\n\n")
+	b.WriteString("## <a href='/r/demo/auction:upcoming/'>Upcoming Auctions</a>\n\n")
+	b.WriteString("## <a href='/r/demo/auction:ongoing/'>Ongoing Auctions</a>\n\n")
 	res.Write(b.String()) // Write the homepage to the response
 }
 
@@ -128,16 +128,17 @@ func renderCreateAuction(res *mux.ResponseWriter, req *mux.Request) {
 	var b bytes.Buffer
 	b.WriteString("<html><body>")
 
-	b.WriteString("# Create New Auction\n")
+	b.WriteString("# Create New Auction\n\n")
+	// b.WriteString("## <a href='/r/demo/auction?help&__func=CreateAuction</a>\n\n")
 	b.WriteString("<form action='/create' method='post'>\n")
 	b.WriteString("Title: <input type='text' name='title'><br>\n")
-	b.WriteString("Description: <input type='text' name='description'><br>\n")
-	b.WriteString("Begin: <input type='datetime-local' name='begin'><br>\n")
-	b.WriteString("End: <input type='datetime-local' name='end'><br>\n")
-	b.WriteString("Starting Price: <input type='number' name='price'><br>\n")
-	b.WriteString("<input type='submit' value='Create Auction'>\n")
-	b.WriteString("</form>\n")
-	b.WriteString("</body></html>")
+	// b.WriteString("Description: <input type='text' name='description'><br>\n")
+	// b.WriteString("Begin: <input type='datetime-local' name='begin'><br>\n")
+	// b.WriteString("End: <input type='datetime-local' name='end'><br>\n")
+	// b.WriteString("Starting Price: <input type='number' name='price'><br>\n")
+	// b.WriteString("<input type='submit' value='Create Auction'>\n")
+	// b.WriteString("</form>\n")
+	// b.WriteString("</body></html>")
 	res.Write(b.String()) // Write the form to the response
 }
 
@@ -164,7 +165,7 @@ func renderUpcomingAuctions(res *mux.ResponseWriter, req *mux.Request) {
 // renderOngoingAuctions renders the list of ongoing auctions
 func renderOngoingAuctions(res *mux.ResponseWriter, req *mux.Request) {
 	var b bytes.Buffer
-	b.WriteString("<h1>Ongoing Auctions</h1>\n")
+	b.WriteString("# Ongoing Auctions\n")
 
 	// Iterate over the list of auctions to find those with state 'ongoing'
 	for i, auc := range auctionList {
@@ -191,7 +192,7 @@ func renderAuctionDetails(res *mux.ResponseWriter, req *mux.Request) {
 	auc := auctionList[id] // Get the auction by ID
 
 	var b bytes.Buffer
-	b.WriteString("<h1>Auction Details</h1>\n")
+	b.WriteString("# Auction Details\n")
 	b.WriteString("## " + auc.Title + "\n")
 	b.WriteString("### Owner: " + auc.Ownable.Owner().String() + "\n")
 	b.WriteString("### Description: " + auc.Description + "\n\n")

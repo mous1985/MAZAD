@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/ufmt"
 )
 
 func TestNewAuction(t *testing.T) {
@@ -172,10 +173,12 @@ func TestEndAuction(t *testing.T) {
 
 	// Simulate ending the auction with a winner
 	auction.Bids = append(auction.Bids, &Bid{Bidder: bidder, Amount: 150})
+
 	winner, highestBid, err := auction.EndAuction()
 	if err != nil {
 		t.Fatalf("expected no error, got '%v'", err)
 	}
+
 	if auction.State != "closed" {
 		t.Fatalf("expected auction state to be 'closed', got '%s'", auction.State)
 	}
