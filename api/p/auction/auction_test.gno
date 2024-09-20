@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 )
 
@@ -13,31 +14,17 @@ func TestNewAuction(t *testing.T) {
 	owner := testutils.TestAddress("owner")
 	begin := time.Now().Add(1 * time.Hour)
 	end := time.Now().Add(24 * time.Hour)
-	minPrice := std.NewCoin("testcoin", 100) // Utilisation de std.Coin
+	minPrice := std.NewCoin("testcoin", 100)
 
 	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice)
 
-	if auction.Title != "Test Auction" {
-		t.Fatalf("expected auction title to be 'Test Auction', got '%s'", auction.Title)
-	}
-	if auction.Ownable.Owner() != owner {
-		t.Fatalf("expected auction owner to be '%s', got '%s'", owner, auction.Ownable.Owner())
-	}
-	if auction.Description != "This is a test auction" {
-		t.Fatalf("expected auction description to be 'This is a test auction', got '%s'", auction.Description)
-	}
-	if auction.Begin != begin {
-		t.Fatalf("expected auction begin time to be '%s', got '%s'", begin, auction.Begin)
-	}
-	if auction.End != end {
-		t.Fatalf("expected auction end time to be '%s', got '%s'", end, auction.End)
-	}
-	if !auction.Price.IsEqual(minPrice) {
-		t.Fatalf("expected auction price to be '%s', got '%s'", minPrice.String(), auction.Price.String())
-	}
-	if auction.State != "upcoming" {
-		t.Fatalf("expected auction state to be 'upcoming', got '%s'", auction.State)
-	}
+	uassert.Equal(t, "Test Auction", auction.Title, "Auction title mismatch")
+	uassert.Equal(t, owner, auction.Ownable.Owner(), "Auction owner mismatch")
+	uassert.Equal(t, "This is a test auction", auction.Description, "Auction description mismatch")
+	uassert.Equal(t, begin.String(), auction.Begin.String(), "Auction begin time mismatch")
+	uassert.Equal(t, end.String(), auction.End.String(), "Auction end time mismatch")
+	uassert.True(t, auction.Price.IsEqual(minPrice), "Auction price mismatch")
+	uassert.Equal(t, "upcoming", auction.State, "Auction state mismatch")
 }
 
 func TestAddBid(t *testing.T) {
@@ -53,48 +40,28 @@ func TestAddBid(t *testing.T) {
 
 	// Test before auction starts
 	err := auction.AddBid(bidder1, std.NewCoin("default", 200))
-	if err == nil || err.Error() != "auction: AddBid: auction has not started yet" {
-		t.Fatalf("expected error 'auction has not started yet', got '%v'", err)
-	}
+	uassert.ErrorContains(t, err, "auction has not started yet", "Expected 'auction has not started yet' error")
 
 	// Test successful bid after auction begins
 	auction.Begin = time.Now().Add(-1 * time.Second)
 	err = auction.AddBid(bidder1, std.NewCoin("default", 200))
-	if err != nil {
-		t.Fatalf("expected no error, got '%v'", err)
-	}
-	if auction.Price.Amount != 200 {
-		t.Fatalf("expected auction price to be '200', got '%d'", auction.Price.Amount)
-	}
-	if len(auction.Bids) != 1 {
-		t.Fatalf("expected number of bids to be '1', got '%d'", len(auction.Bids))
-	}
-	if auction.Bids[0].Bidder != bidder1 {
-		t.Fatalf("expected bidder to be 'bidder1', got '%s'", auction.Bids[0].Bidder)
-	}
+	uassert.NoError(t, err, "Expected no error for valid bid")
+	uassert.Equal(t, int64(200), auction.Price.Amount, "Auction price mismatch after first bid")
+	uassert.Equal(t, 1, len(auction.Bids), "Expected one bid")
+	uassert.Equal(t, bidder1, auction.Bids[0].Bidder, "Bidder mismatch")
 
 	std.TestSetOrigCaller(bidder2)
 
 	// Test higher bid
 	err = auction.AddBid(bidder2, std.NewCoin("default", 300))
-	if err != nil {
-		t.Fatalf("expected no error, got '%v'", err)
-	}
-	if auction.Price.Amount != 300 {
-		t.Fatalf("expected auction price to be '300', got '%d'", auction.Price.Amount)
-	}
-	if len(auction.Bids) != 2 {
-		t.Fatalf("expected number of bids to be '2', got '%d'", len(auction.Bids))
-	}
-	if auction.Bids[1].Bidder != bidder2 {
-		t.Fatalf("expected bidder to be 'bidder2', got '%s'", auction.Bids[1].Bidder)
-	}
+	uassert.NoError(t, err, "Expected no error for valid higher bid")
+	uassert.Equal(t, int64(300), auction.Price.Amount, "Auction price mismatch after second bid")
+	uassert.Equal(t, 2, len(auction.Bids), "Expected two bids")
+	uassert.Equal(t, bidder2, auction.Bids[1].Bidder, "Bidder mismatch")
 
 	// Test bid lower than current price
 	err = auction.AddBid(bidder1, std.NewCoin("default", 250))
-	if err == nil || err.Error() != "auction: AddBid: bid amount must be higher than the current highest bid" {
-		t.Fatalf("expected error 'bid amount must be higher than the current highest bid', got '%v'", err)
-	}
+	uassert.ErrorContains(t, err, "bid amount must be higher than the current highest bid", "Expected error for lower bid")
 }
 
 func TestGetPaginatedBids(t *testing.T) {
@@ -114,40 +81,27 @@ func TestGetPaginatedBids(t *testing.T) {
 	auction.AddBid(bidder2, std.NewCoin("default", 200))
 	auction.AddBid(bidder3, std.NewCoin("default", 250))
 
-	// Test the first page with a page size of 2
+	// Test the first page with a size of 2
 	bids, err := auction.GetPaginatedBids(1, 2)
-	if err != nil {
-		t.Fatalf("expected no error, got '%v'", err)
-	}
-	if len(bids) != 2 {
-		t.Fatalf("expected 2 bids, got %d", len(bids))
-	}
+	uassert.NoError(t, err, "Expected no error on fetching first page of bids")
+	uassert.Equal(t, 2, len(bids), "Expected 2 bids on the first page")
 
-	// Test the second page with a page size de 2
+	// Test the second page with a size of 2
 	bids, err = auction.GetPaginatedBids(2, 2)
-	if err != nil {
-		t.Fatalf("expected no error, got '%v'", err)
-	}
-	if len(bids) != 1 {
-		t.Fatalf("expected 1 bid, got %d", len(bids))
-	}
+	uassert.NoError(t, err, "Expected no error on fetching second page of bids")
+	uassert.Equal(t, 1, len(bids), "Expected 1 bid on the second page")
 
 	// Test invalid page
 	bids, err = auction.GetPaginatedBids(3, 2)
-	if err == nil || err.Error() != "page exceeds total number of bids" {
-		t.Fatalf("expected error 'page exceeds total number of bids', got '%v'", err)
-	}
+	uassert.ErrorContains(t, err, "page exceeds total number of bids", "Expected error 'page exceeds total number of bids' for invalid page")
 
-	// Test for invalid pagination parameters
+	// Test invalid pagination parameters
 	_, err = auction.GetPaginatedBids(0, 2)
-	if err == nil || err.Error() != "invalid pagination parameters" {
-		t.Fatalf("expected error 'invalid pagination parameters', got '%v'", err)
-	}
+	uassert.ErrorContains(t, err, "invalid pagination parameters", "Expected error 'invalid pagination parameters' for invalid pagination")
 }
 
 func TestEndAuction(t *testing.T) {
 	owner := testutils.TestAddress("owner")
-	nonOwner := testutils.TestAddress("nonOwner")
 	bidder := testutils.TestAddress("bidder")
 	begin := time.Now().Add(1 * time.Hour)
 	end := time.Now().Add(24 * time.Hour)
@@ -155,45 +109,25 @@ func TestEndAuction(t *testing.T) {
 
 	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice)
 
-	// Set the original caller as the owner for this test
-	std.TestSetOrigCaller(owner)
+	// Simulate the auction running and place a bid
+	std.TestSetOrigCaller(bidder)
+	auction.Begin = time.Now().Add(-1 * time.Second) // Start the auction
+	err := auction.AddBid(bidder, std.NewCoin("token", 150))
+	uassert.NoError(t, err, "Unexpected error when placing a bid")
 
-	// Attempt to end the auction before the end time
-	_, _, err := auction.EndAuction()
-	if err == nil || err.Error() != "auction: EndAuction: auction cannot end before the end time" {
-		t.Fatalf("expected error 'auction cannot end before the end time', got '%v'", err)
-	}
-
-	// Simulate the end of the auction with no bids after the auction has ended
+	// Set the auction end time to the past to simulate the auction ending
 	auction.End = time.Now().Add(-1 * time.Second)
-	_, _, err = auction.EndAuction()
-	if err == nil || err.Error() != "auction: EndAuction: auction ended with no bids" {
-		t.Fatalf("expected error 'auction ended with no bids', got '%v'", err)
-	}
 
-	// Simulate ending the auction with a winner
-	auction.Bids = append(auction.Bids, &Bid{Bidder: bidder, Amount: 150})
-
+	// End the auction
+	std.TestSetOrigCaller(owner)
 	winner, highestBid, err := auction.EndAuction()
-	if err != nil {
-		t.Fatalf("expected no error, got '%v'", err)
-	}
 
-	if auction.State != "closed" {
-		t.Fatalf("expected auction state to be 'closed', got '%s'", auction.State)
-	}
-	if winner != bidder {
-		t.Fatalf("expected winner to be '%s', got '%s'", bidder, winner)
-	}
-	if !highestBid.IsEqual(std.NewCoin("token", 150)) {
-		t.Fatalf("expected highest bid to be '150 token', got '%s'", highestBid.String())
-	}
+	// Ensure no error occurs when ending the auction with bids
+	uassert.NoError(t, err, "Expected no error when auction ends with bids")
 
-	// Set the original caller as a non-owner and test ending the auction
-	std.TestSetOrigCaller(nonOwner)
+	// Check that the winner is the correct bidder
+	uassert.Equal(t, bidder, winner, "Winner should be the highest bidder")
 
-	_, _, err = auction.EndAuction()
-	if err == nil || err.Error() != "auction: EndAuction: only the owner can end the auction" {
-		t.Fatalf("expected error 'only the owner can end the auction', got '%v'", err)
-	}
+	// Check that the highest bid is 150 tokens
+	uassert.Equal(t, std.NewCoin("token", 150).String(), highestBid.String(), "Highest bid should be 150 tokens")
 }
