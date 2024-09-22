@@ -33,7 +33,8 @@ func CreateAuction(title, description string, begin, end int64, price std.Coin) 
 	owner := std.GetOrigCaller()
 	beginTime := time.Unix(begin, 0)
 	endTime := time.Unix(end, 0)
-	auction := NewAuction(title, owner, description, beginTime, endTime, price)
+	priceAmount := price
+	auction := NewAuction(title, owner, description, beginTime, endTime, priceAmount)
 	auctionList = append(auctionList, auction) // Add the auction to the list
 	return "Auction created successfully"
 }
@@ -208,5 +209,5 @@ func renderAuctionDetails(res *mux.ResponseWriter, req *mux.Request) {
 		b.WriteString("</form>\n")
 	}
 
-	res.Write(b.String()) // Write the auction details to the response
+	res.Write(b.String())
 }

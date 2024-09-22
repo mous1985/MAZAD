@@ -28,7 +28,7 @@ func TestAuctionRealm(t *testing.T) {
 	CreateAuction("Test Auction", "A simple test auction", begin, end, minPrice)
 
 	// Check if auction is listed under 'upcoming' section
-	std.TestSkipHeights(1) // Move forward by 1 block to allow processing
+	std.TestSkipHeights(1)
 	updateAuctionStates()
 
 	upcomingPage := Render("upcoming")
