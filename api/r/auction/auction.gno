@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/mux"
+	"gno.land/p/demo/ufmt"
 )
 
 // List to store all auctions
@@ -17,7 +18,7 @@ var (
 )
 
 // Map to store deposits for all bidders in the realm
-var globalDeposits = make(map[std.Address]std.Coin)
+var globalDeposits = make(map[std.Address]int64)
 
 // Initializes the router and handles routes for the auction realm
 func init() {
@@ -29,7 +30,7 @@ func init() {
 }
 
 // CreateAuction handles creating a new auction and appends it to the auctionList
-func CreateAuction(title, description string, begin, end int64, price std.Coin) string {
+func CreateAuction(title, description string, begin, end int64, price int64) string {
 	owner := std.GetOrigCaller()
 	beginTime := time.Unix(begin, 0)
 	endTime := time.Unix(end, 0)
@@ -40,8 +41,12 @@ func CreateAuction(title, description string, begin, end int64, price std.Coin) 
 }
 
 // AddBid handles placing a bid on an auction identified by its ID
-func AddBid(id int, amount std.Coin) string {
+func AddBid(id int, amount int64) string { // amount en int64
 	caller := std.GetOrigCaller()
+
+	// Recupere le montant envoyer qu realm
+	transaction := std.GetOrigSend()
+	amountSend := transaction.AmountOf("ugnot") // montant en ugnot
 
 	// Validate auction ID
 	if id >= len(auctionList) || id < 0 {
@@ -50,21 +55,29 @@ func AddBid(id int, amount std.Coin) string {
 	auction := auctionList[id]
 
 	// Get Banker instance for handling transactions
-	banker := std.GetBanker(std.BankerTypeOrigSend)
+	// banker := std.GetBanker(std.BankerTypeOrigSend)
 
 	// Check if the bidder already has a deposit in the  realm
 	existingDeposit, exists := globalDeposits[caller]
 	if exists {
 		// Calculate additional deposit required
-		additionalAmount := amount.Sub(existingDeposit)
-		if additionalAmount.IsPositive() {
+		// Close the auction and return the winner and the highest bid
+		additionalAmount := amount - existingDeposit
+		if additionalAmount > 0 {
 			// Transfer the additional amount from the bidder to the auction realm
-			banker.SendCoins(caller, std.CurrentRealm().Addr(), std.NewCoins(additionalAmount))
+			// banker.SendCoins(caller, std.CurrentRealm().Addr(), std.NewCoins(additionalAmount))
+			if amountSend != additionalAmount {
+				panic("Invalid bid amount vous devez envoyer ")
+			}
 		}
 	} else {
-		// New bidder: deposit the full amount
-		banker.SendCoins(caller, std.CurrentRealm().Addr(), std.NewCoins(amount))
 		globalDeposits[caller] = amount
+		// New bidder: deposit the full amount
+		if amountSend < globalDeposits[caller] {
+			panic("Invalid bid amount")
+		}
+		// banker.SendCoins(caller, std.CurrentRealm().Addr(), std.NewCoins(amount))
+		// globalDeposits[caller] = amount
 	}
 
 	// Place the bid in the auction
@@ -95,23 +108,16 @@ func EndAuction(id int) string {
 	// Refund all losing bidders
 	for bidder, deposit := range globalDeposits {
 		if bidder != winner {
-			banker.SendCoins(pkgAddr, bidder, std.NewCoins(deposit))
+			banker.SendCoins(pkgAddr, bidder, std.Coins{{Amount: deposit, Denom: "ugnot"}}) // std.NewCoins(deposit)
 			// Reset the deposit for the bidder
 			delete(globalDeposits, bidder)
 		}
 	}
 
 	// Transfer the highest bid to the auction owner
-	banker.SendCoins(pkgAddr, auction.Ownable.Owner(), std.NewCoins(highestBid))
-
-	// Clean up the winner's deposit
-	delete(globalDeposits, winner)
-
+	banker.SendCoins(pkgAddr, auction.Ownable.Owner(), std.Coins{{Amount: highestBid, Denom: "ugnot"}})
+	// ufmt.Sprintf( "  auc.Price  "\n"))
 	return "Auction ended successfully"
-}
-
-func Render(path string) string {
-	return router.Render(path)
 }
 
 // renderHomepage renders the homepage with links to different sections of the auction system
@@ -122,6 +128,10 @@ func renderHomepage(res *mux.ResponseWriter, req *mux.Request) {
 	b.WriteString("## <a href='/r/demo/auction:upcoming/'>Upcoming Auctions</a>\n\n")
 	b.WriteString("## <a href='/r/demo/auction:ongoing/'>Ongoing Auctions</a>\n\n")
 	res.Write(b.String()) // Write the homepage to the response
+}
+
+func Render(path string) string {
+	return router.Render(path)
 }
 
 // renderCreateAuction renders the auction creation form
@@ -156,7 +166,7 @@ func renderUpcomingAuctions(res *mux.ResponseWriter, req *mux.Request) {
 			b.WriteString("### Owner: " + auc.Ownable.Owner().String() + "\n")
 			b.WriteString("### Description: " + auc.Description + "\n\n")
 			b.WriteString("This auction starts on: " + auc.Begin.String() + " and ends on: " + auc.End.String() + "\n\n")
-			b.WriteString("### Starting Price: " + auc.Price.String() + "\n")
+			b.WriteString(ufmt.Sprintf("### starting Price: %d\n", auc.Price))
 			b.WriteString("[View Auction](/auction/" + strconv.Itoa(i) + ")\n")
 		}
 	}
@@ -175,7 +185,7 @@ func renderOngoingAuctions(res *mux.ResponseWriter, req *mux.Request) {
 			b.WriteString("### Owner: " + auc.Ownable.Owner().String() + "\n")
 			b.WriteString("### Description: " + auc.Description + "\n\n")
 			b.WriteString("This auction started on: " + auc.Begin.String() + " and ends on: " + auc.End.String() + "\n\n")
-			b.WriteString("### Current Price: " + auc.Price.String() + "\n")
+			b.WriteString(ufmt.Sprintf("### Current Price: %d\n", auc.Price))
 			b.WriteString("[View Auction](/auction/" + strconv.Itoa(i) + ")\n")
 		}
 	}
@@ -198,7 +208,7 @@ func renderAuctionDetails(res *mux.ResponseWriter, req *mux.Request) {
 	b.WriteString("### Owner: " + auc.Ownable.Owner().String() + "\n")
 	b.WriteString("### Description: " + auc.Description + "\n\n")
 	b.WriteString("This auction starts on: " + auc.Begin.String() + " and ends on: " + auc.End.String() + "\n\n")
-	b.WriteString("### Current Price: " + auc.Price.String() + "\n")
+	b.WriteString(ufmt.Sprintf("### Current Price: %d\n", auc.Price))
 
 	// If the auction is ongoing, provide a form to place a bid
 	if auc.State == "ongoing" {
