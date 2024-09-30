@@ -132,11 +132,11 @@ func AuctionToJSONString(auction *Auction) string {
 	sb.WriteString("{")
 	sb.WriteString(`"title":"` + escapeString(auction.Title) + `",`)
 	sb.WriteString(`"description":"` + escapeString(auction.Description) + `",`)
-	sb.WriteString(`"begin":"` + strconv.Itoa(int((auction.Begin).Unix())) + `",`)
+	sb.WriteString(`"begin":"` + strconv.Itoa(int(auction.Begin.Unix())) + `",`)
 	sb.WriteString(`"deadline":"` + strconv.Itoa(int(auction.End.Unix())) + `",`)
 	sb.WriteString(`"owner":"` + auction.Ownable.Owner().String() + `",`)
 	sb.WriteString(`"firstPrice":"` + strconv.Itoa(int(auction.Price)) + `",`)
-	sb.WriteString(`"bids":` + strconv.Itoa(len(auction.Bids)) + `,`)
+	sb.WriteString(`"bids":` + strconv.Itoa(len(auction.Bids)))
 	sb.WriteString("}")
 
 	return sb.String()

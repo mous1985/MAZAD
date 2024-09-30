@@ -1,108 +1,134 @@
-
-import { useState } from 'react';
-import { Box, Button, Input, Textarea, useToast } from '@chakra-ui/react';
-import { AdenaService } from '../../../services/adena/adena.ts';
-import { IAdenaMessage } from '../../../services/adena/adena.types.ts';
-import { EMessageType } from '../../../services/adena/adena.types.ts';
+import { useState, useContext } from 'react';
+import { Box, Input, Textarea, Button, FormControl, FormLabel, NumberInput, NumberInputField, useToast } from '@chakra-ui/react';
+import { EMessageType, IAccountInfo } from "../../../services/adena/adena.types.ts";
+import { AdenaService } from "../../../services/adena/adena.ts";
+import ProviderContext from '../../../context/ProviderContext.ts';
+import AccountContext from '../../../context/AccountContext.ts';
 import Config from '../../../config.ts';
 
-const CreateAuction = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState<number>(0);
-  const [beginTime, setBeginTime] = useState<string>(''); // New field for start time
-  const [endTime, setEndTime] = useState<string>(''); // New field for end time
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const CreateAuction = ({ onAuctionCreated }: { onAuctionCreated: () => void }) => {
+  const { address } = useContext(AccountContext);
+  const { provider } = useContext(ProviderContext);
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [startingPrice, setStartingPrice] = useState<number>(0);
+  const [begin, setBegin] = useState<string>(''); // Using string for input field
+  const [end, setEnd] = useState<string>(''); // Using string for input field
   const toast = useToast();
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+  const handleCreateAuction = async () => {
+    const parsedBegin = Date.parse(begin);
+    const parsedEnd = Date.parse(end);
+    if (isNaN(parsedBegin) || isNaN(parsedEnd)) {
+      console.error('Invalid dates provided');
+      return;
+    }
+    if (!provider || !address) {
+      toast({
+        title: 'Connection Error',
+        description: 'Please connect your wallet first.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
 
     try {
-      const accountInfo = await AdenaService.getAccountInfo();
+      const accountInfo: IAccountInfo = await AdenaService.getAccountInfo();
 
-      const beginTimestamp = Math.floor(new Date(beginTime).getTime() / 1000);
-      const endTimestamp = Math.floor(new Date(endTime).getTime() / 1000);
-
-      const messages: IAdenaMessage[] = [
-        {
-          type: EMessageType.MSG_CALL,
-          value: {
-            caller: accountInfo.address,
-            send: `${price}ugnot`, // Prix en ugnot
-            pkg_path: Config.REALM_PATH,
-            func: 'CreateAuction',
-            args: [title, description, beginTimestamp.toString() , endTimestamp.toString(), price.toString()]
-          }
-        }
-      ];
-
-      await AdenaService.sendTransaction(messages, 5000000);
+      const beginTime = Math.floor(new Date(parsedBegin).getTime() / 1000); // Convert to Unix timestamp
+      const endTime = Math.floor(new Date(parsedEnd).getTime() / 1000);
+      // Send transaction to create the auction
+      await AdenaService.sendTransaction(
+        [
+          {
+            type: EMessageType.MSG_CALL,
+            value: {
+              caller: accountInfo.address,
+              send: '',
+              pkg_path: Config.REALM_PATH,
+              func: 'CreateAuction',
+              args: [
+                title,
+                description,
+                `${beginTime}`,
+                `${endTime}`,
+                `${startingPrice}`,
+              ],
+            },
+          },
+        ],
+        2000000 
+      );
 
       toast({
-        title: 'Auction created successfully!',
+        title: 'Auction Created',
+        description: 'Your auction has been created successfully!',
         status: 'success',
-        position: 'bottom-right',
         duration: 5000,
         isClosable: true,
       });
 
-      // Réinitialiser les champs du formulaire après la création
-      setTitle('');
-      setDescription('');
-      setPrice(0);
-      setBeginTime('');
-      setEndTime('');
-    } catch (e) {
-      console.error(e);
+      onAuctionCreated(); // Call the callback to refresh auction data
+    } catch (error) {
+      console.error('Error creating auction:', error);
       toast({
-        title: 'Unable to create auction',
+        title: 'Error',
+        description: 'There was an error creating the auction.',
         status: 'error',
-        position: 'bottom-right',
         duration: 5000,
         isClosable: true,
       });
     }
-
-    setIsSubmitting(false);
   };
 
   return (
-    <Box>
-      <Input
-        placeholder="Auction Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <Textarea
-        placeholder="Auction Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-      <Input
-        placeholder="Starting Price"
-        type="number"
-        value={price}
-        onChange={(e) => setPrice(Number(e.target.value))}
-      />
-      <Input
-        placeholder="Begin Time (YYYY-MM-DD HH:mm:ss)"
-        value={beginTime}
-        onChange={(e) => setBeginTime(e.target.value)}
-      />
-      <Input
-        placeholder="End Time (YYYY-MM-DD HH:mm:ss)"
-        value={endTime}
-        onChange={(e) => setEndTime(e.target.value)}
-      />
-      <Button
-        onClick={handleSubmit}
-        isLoading={isSubmitting}
-        loadingText="CREATING AUCTION"
-        variant="solid"
-        colorScheme="teal"
-        mt={4}
-      >
+    <Box maxW="md" mx="auto" mt={8} p={6} borderRadius="lg" borderWidth="1px">
+      <FormControl id="title" mb={4}>
+        <FormLabel>Title</FormLabel>
+        <Input
+          placeholder="Auction Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </FormControl>
+
+      <FormControl id="description" mb={4}>
+        <FormLabel>Description</FormLabel>
+        <Textarea
+          placeholder="Auction Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </FormControl>
+
+      <FormControl id="startingPrice" mb={4}>
+        <FormLabel>Starting Price (GNOT)</FormLabel>
+        <NumberInput min={0} value={startingPrice} onChange={(valueString) => setStartingPrice(Number(valueString))}>
+          <NumberInputField />
+        </NumberInput>
+      </FormControl>
+
+      <FormControl id="begin" mb={4}>
+        <FormLabel>Begin Time</FormLabel>
+        <Input
+          type="datetime-local"
+          value={begin}
+          onChange={(e) => setBegin(e.target.value)}
+        />
+      </FormControl>
+
+      <FormControl id="end" mb={4}>
+        <FormLabel>End Time</FormLabel>
+        <Input
+          type="datetime-local"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+        />
+      </FormControl>
+
+      <Button colorScheme="blue" onClick={handleCreateAuction}>
         Create Auction
       </Button>
     </Box>

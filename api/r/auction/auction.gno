@@ -2,7 +2,6 @@ package auction
 
 import (
 	"bytes"
-	//"sort"
 	"std"
 	"strconv"
 	"time"
@@ -31,7 +30,7 @@ func init() {
 }
 
 // CreateAuction handles creating a new auction and appends it to the auctionList
-func CreateAuction(title, description string, begin, end int64, price int64) string {
+func CreateAuction(title, description string, begin int64, end int64, price int64) string {
 	owner := std.GetOrigCaller()
 	beginTime := time.Unix(begin, 0)
 	endTime := time.Unix(end, 0)
@@ -126,10 +125,6 @@ func GetAuctions() string {
 		return "[]"
 	}
 
-	// sort.Slice(auctionList, func(i, j int) bool {
-	// 	return auctionList[i].Begin.Before(auctionList[j].Begin)
-	// })
-
 	return pau.AuctionsToJSONString(auctionList)
 }
 
@@ -178,7 +173,7 @@ func renderAuctionList(res *mux.ResponseWriter, req *mux.Request) {
 	b.WriteString("### Description: " + auc.Description + "\n\n")
 	b.WriteString("This auction starts on: " + auc.Begin.String() + " and ends on: " + auc.End.String() + "\n\n")
 	b.WriteString(ufmt.Sprintf("### starting Price: %d\n", auc.Price))
-	// b.WriteString("[View Auction](/auction/" + strconv.Itoa(i) + ")\n")
+	b.WriteString("[View Auction](/auction/" + strconv.Itoa(id) + ")\n")
 
 	res.Write(b.String())
 }
