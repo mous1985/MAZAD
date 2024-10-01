@@ -128,6 +128,14 @@ func GetAuctions() string {
 	return pau.AuctionsToJSONString(auctionList)
 }
 
+func GetAuctionById(id int) string {
+	if id >= len(auctionList) || id < 0 {
+		panic("Invalid auction ID")
+	}
+
+	return pau.AuctionToJSONString(auctionList[id])
+}
+
 func Render(path string) string {
 	return router.Render(path)
 }

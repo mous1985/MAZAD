@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { Box, Text, Button } from '@chakra-ui/react';
 import Config from '../../../config.ts';
 import ProviderContext from '../../../context/ProviderContext.ts';
@@ -16,7 +17,6 @@ const Home = () => {
   const [showForm, setShowForm] = useState(false);
   const [auctions, setAuctions] = useState<IAuction[]>([]);
 
-  // Fetch all auctions from the Realm
   const fetchAuctions = async () => {
     if (!provider) {
       throw new Error('Invalid chain RPC URL');
@@ -70,15 +70,16 @@ const Home = () => {
       )}
 
       <Box mt={8}>
-        <Text fontSize="2xl" mb="4">
-          Current Auctions
-        </Text>
+        <Text fontSize="2xl" mb="4">Current Auctions</Text>
         {auctions.length === 0 ? (
           <Text>No auctions available.</Text>
         ) : (
           auctions.map((auction, index) => (
-            <Auction key={index} auction={auction} />
-           
+            <Box key={index} mb={4}>
+              <Link to={`/auction/${index}`}>
+                <Auction auction={auction} />
+              </Link>
+            </Box>
           ))
         )}
       </Box>

@@ -65,6 +65,10 @@ const theme = extendTheme({
         fontWeight: 700,
         fontFamily: 'Fira Mono, sans-serif',
         animation: 'techBackground 10s ease infinite',
+        margin: 0,             // Enlève les marges globales du body
+        padding: 0,            // Enlève les paddings inutiles
+        minHeight: '100vh',    // Assure que le body occupe toute la hauteur
+        overflowX: 'hidden',   // Empêche le débordement horizontal
       },
       '@keyframes techBackground': {
         '0%': { backgroundPosition: '0% 50%' },
@@ -73,6 +77,7 @@ const theme = extendTheme({
       },
     },
   },
+
   colors: {
     mazad: {
       primary: '#1E88E5',

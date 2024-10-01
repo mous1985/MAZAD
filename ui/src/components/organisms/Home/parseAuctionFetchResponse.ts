@@ -11,3 +11,4 @@ export const parseAuctionFetchResponse = (response: string): IAuction[] => {
 
     return JSON.parse(cleanResponse);
 };
+
