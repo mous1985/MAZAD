@@ -1,0 +1,3 @@
+[submodule "server/tx-indexer"]
+	path = server/tx-indexer
+	url = https://github.com/gnolang/tx-indexer.git

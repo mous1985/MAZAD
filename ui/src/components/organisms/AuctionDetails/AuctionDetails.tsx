@@ -51,6 +51,12 @@ const AuctionDetails = () => {
         }
 
         try {
+            console.log(`Placing bid for auction ID: ${id}, bid amount: ${bidAmount} GNOT`);
+
+            // Conversion du montant en ugnot (si c'est bien l'unité utilisée)
+            const bidInUgnot = bidAmount * 1_000_000;
+            console.log(`Bid in ugnot: ${bidInUgnot}`);
+
             await AdenaService.sendTransaction(
                 [
                     {
@@ -60,7 +66,7 @@ const AuctionDetails = () => {
                             send: '',
                             pkg_path: Config.REALM_PATH,
                             func: 'AddBid',
-                            args: [`${id}`, `${bidAmount * 1_000_000}`], // Montant converti en ugnot
+                            args: [`${id}`, `${bidAmount}`], // Montant converti en ugnot
                         },
                     },
                 ],

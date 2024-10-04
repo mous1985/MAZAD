@@ -36,7 +36,7 @@ func CreateAuction(title, description string, begin int64, end int64, price int6
 	endTime := time.Unix(end, 0)
 	priceAmount := price
 	auction := pau.NewAuction(title, owner, description, beginTime, endTime, priceAmount)
-	auctionList = append(auctionList, auction) // Add the auction to the list
+	auctionList = append(auctionList, auction)
 	return "Auction created successfully"
 }
 
@@ -161,7 +161,7 @@ func renderHomepage(res *mux.ResponseWriter, req *mux.Request) {
 	b.WriteString("# Homepage\n\n")
 	b.WriteString("## <a href='/r/demo/auction:List'>AuctionList</a>\n\n")
 
-	res.Write(b.String()) // Write the homepage to the response
+	res.Write(b.String())
 }
 
 func renderAuctionList(res *mux.ResponseWriter, req *mux.Request) {

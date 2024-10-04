@@ -67,6 +67,12 @@ func (a *Auction) AddBid(bidder std.Address, amount int64) error {
 	bid := &Bid{Bidder: bidder, Amount: amount}
 	a.Bids = append(a.Bids, bid)
 	a.Price = amount
+	std.Emit("BidPlaced",
+		"bidder", bidder.String(),
+		"amount", strconv.Itoa(int(amount)),
+		"newPrice", strconv.Itoa(int(a.Price)),
+	)
+
 	return nil
 }
 

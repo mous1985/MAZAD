@@ -12,8 +12,8 @@ const CreateAuction = ({ onAuctionCreated }: { onAuctionCreated: () => void }) =
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [startingPrice, setStartingPrice] = useState<number>(0);
-  const [begin, setBegin] = useState<string>(''); // Using string for input field
-  const [end, setEnd] = useState<string>(''); // Using string for input field
+  const [begin, setBegin] = useState<string>('');
+  const [end, setEnd] = useState<string>('');
   const toast = useToast();
 
   const handleCreateAuction = async () => {
@@ -59,7 +59,7 @@ const CreateAuction = ({ onAuctionCreated }: { onAuctionCreated: () => void }) =
             },
           },
         ],
-        2000000 
+        2000000
       );
 
       toast({

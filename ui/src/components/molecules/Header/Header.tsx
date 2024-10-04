@@ -1,10 +1,10 @@
 import { FC, useContext } from 'react';
-import { Flex, Button, Box, Text } from '@chakra-ui/react'; // Utilisation de Chakra pour le style
+import { Flex, Button, Box, Text } from '@chakra-ui/react';
 import Connect from '../../atoms/Connect/Connect.tsx';
 import AccountContext from '../../../context/AccountContext.ts';
 
 const Header: FC = () => {
-  const { address } = useContext(AccountContext); // Récupération de l'adresse depuis le contexte
+  const { address } = useContext(AccountContext);
 
   return (
     <Flex
@@ -18,12 +18,12 @@ const Header: FC = () => {
     >
       {address ? (
         <Box bg="green.600" p="2" rounded="md">
-          <Text color="white">Connected: {address}</Text> {/* Affiche l'adresse connectée */}
+          <Text color="white">Connected: {address}</Text> { }
         </Box>
       ) : (
         <Button colorScheme="teal" onClick={() => <Connect />}>
           Connect to Adena Wallet
-        </Button> /* Bouton pour connecter le portefeuille */
+        </Button>
       )}
     </Flex>
   );
