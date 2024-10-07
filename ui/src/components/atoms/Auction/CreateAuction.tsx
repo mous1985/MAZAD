@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import { Box, Input, Textarea, Button, FormControl, FormLabel, NumberInput, NumberInputField, useToast } from '@chakra-ui/react';
+import { Box, Input, Textarea, Button, FormControl, FormLabel, NumberInput, NumberInputField, useToast, Divider } from '@chakra-ui/react';
 import { EMessageType, IAccountInfo } from "../../../services/adena/adena.types.ts";
 import { AdenaService } from "../../../services/adena/adena.ts";
 import ProviderContext from '../../../context/ProviderContext.ts';
@@ -14,7 +14,14 @@ const CreateAuction = ({ onAuctionCreated }: { onAuctionCreated: () => void }) =
   const [startingPrice, setStartingPrice] = useState<number>(0);
   const [begin, setBegin] = useState<string>('');
   const [end, setEnd] = useState<string>('');
+  const [image, setImage] = useState<File | null>(null);
   const toast = useToast();
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setImage(event.target.files[0]);
+    }
+  };
 
   const handleCreateAuction = async () => {
     const parsedBegin = Date.parse(begin);
@@ -85,6 +92,15 @@ const CreateAuction = ({ onAuctionCreated }: { onAuctionCreated: () => void }) =
 
   return (
     <Box maxW="md" mx="auto" mt={8} p={6} borderRadius="lg" borderWidth="1px">
+      {/* Image Upload Section */}
+      <FormControl id="image" mb={4}>
+        <FormLabel>Upload Image</FormLabel>
+        <Input type="file" onChange={handleImageChange} />
+      </FormControl>
+
+      <Divider my={6} />
+
+      {/* Auction Information Section */}
       <FormControl id="title" mb={4}>
         <FormLabel>Title</FormLabel>
         <Input

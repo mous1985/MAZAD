@@ -9,7 +9,7 @@ import { BroadcastTxCommitResult } from '@gnolang/tm2-js-client';
 
 export class AdenaService {
   static validateAdena() {
-    // @ts-expect-error This should be injected by the extension
+    //  This should be injected by the extension
     const adena = window.adena;
 
     // Check if adena is installed as an extension
@@ -25,11 +25,14 @@ export class AdenaService {
   static async establishConnection(name: string): Promise<void> {
     AdenaService.validateAdena();
 
-    // @ts-expect-error This should be injected by the extension
+    // This should be injected by the extension
     const adena = window.adena;
 
     // Establish a connection to the wallet
-    const response: IAdenaResponse = await adena.AddEstablish(name);
+    if (!adena) {
+      throw new Error('Adena is not defined');
+    }
+    const response = await adena.AddEstablish(name) as IAdenaResponse;
 
     // Parse the response
     if (
@@ -50,11 +53,14 @@ export class AdenaService {
   static async getAccountInfo(): Promise<IAccountInfo> {
     AdenaService.validateAdena();
 
-    // @ts-expect-error This should be injected by the extension
+    // This should be injected by the extension
     const adena = window.adena;
 
     // Get the account info
-    const response: IAdenaResponse = await adena.GetAccount();
+    if (!adena) {
+      throw new Error('Adena is not defined');
+    }
+    const response: IAdenaResponse = await adena.GetAccount() as IAdenaResponse;
     if (response.status !== EAdenaResponseStatus.SUCCESS) {
       throw new Error('unable to fetch account info');
     }
@@ -66,10 +72,13 @@ export class AdenaService {
   static async switchNetwork(chainID: string): Promise<void> {
     AdenaService.validateAdena();
 
-    // @ts-expect-error This should be injected by the extension
+    //This should be injected by the extension
     const adena = window.adena;
 
     // Get the account info
+    if (!adena) {
+      throw new Error('Adena is not defined');
+    }
     const response: IAdenaResponse = await adena.SwitchNetwork(chainID);
     if (
       response.status === EAdenaResponseStatus.SUCCESS ||
@@ -89,8 +98,13 @@ export class AdenaService {
   ): Promise<BroadcastTxCommitResult> {
     AdenaService.validateAdena();
 
-    // @ts-expect-error This should be injected by the extension
+    //  This should be injected by the extension
     const adena = window.adena;
+
+    // Ensure adena is defined
+    if (!adena) {
+      throw new Error('Adena is not defined');
+    }
 
     // Sign and send the transaction
     const response: IAdenaResponse = await adena.DoContract({

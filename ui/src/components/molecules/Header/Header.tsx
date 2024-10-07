@@ -1,30 +1,47 @@
-import { FC, useContext } from 'react';
-import { Flex, Button, Box, Text } from '@chakra-ui/react';
-import Connect from '../../atoms/Connect/Connect.tsx';
+// src/components/molecules/Header/Header.tsx
+import { useContext } from 'react';
+import { Flex, Box, Text } from '@chakra-ui/react';
+import { Link } from 'react-router-dom';
+import { CheckCircleIcon } from '@chakra-ui/icons';
+import Connect from '../../atoms/Connect/Connect';
 import AccountContext from '../../../context/AccountContext.ts';
 
-const Header: FC = () => {
+const Header = () => {
   const { address } = useContext(AccountContext);
 
   return (
     <Flex
       as="header"
-      bg="gray.300"
-      h="20"
-      p="8"
-      align="center"
-      justify="center"
-      w="100vw"
+      width="100%"
+      height="80px"
+      padding="0 16px"
+      alignItems="center"
+      justifyContent="space-between"
+      bg="mazad.secondary"
+      color="white"
+      boxShadow="md"
+      position="fixed"
+      top="0"
+      left="0"
+      zIndex="1000"
     >
-      {address ? (
-        <Box bg="green.600" p="2" rounded="md">
-          <Text color="white">Connected: {address}</Text> { }
-        </Box>
-      ) : (
-        <Button colorScheme="teal" onClick={() => <Connect />}>
-          Connect to Adena Wallet
-        </Button>
-      )}
+      <Box display="flex" alignItems="center">
+        <Link to="/">
+          <Text fontSize="xl" fontWeight="bold">
+            MAZAD
+          </Text>
+        </Link>
+      </Box>
+      <Box display="flex" alignItems="center">
+        {!address ? (
+          <Connect />
+        ) : (
+          <Box display="flex" alignItems="center">
+            <CheckCircleIcon color="green.500" mr={2} />
+            <Text>CONNECTED</Text>
+          </Box>
+        )}
+      </Box>
     </Flex>
   );
 };

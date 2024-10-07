@@ -8,6 +8,7 @@ import { IAuction } from '../../atoms/Auction/auction.types';
 import { AdenaService } from '../../../services/adena/adena.ts';
 import { EMessageType } from '../../../services/adena/adena.types.ts';
 import { parseAuctionByIdResponse } from './parseAuctionByIdResponse.ts';
+
 const AuctionDetails = () => {
     const { id } = useParams<{ id: string }>();
     const { provider } = useContext(ProviderContext);
@@ -16,6 +17,7 @@ const AuctionDetails = () => {
     const [bidAmount, setBidAmount] = useState<number>(0);
     const toast = useToast();
 
+    // Fonction pour récupérer les détails d'une enchère spécifique
     const fetchAuctionDetails = async () => {
         if (!provider) {
             throw new Error('Invalid chain RPC URL');
@@ -38,6 +40,7 @@ const AuctionDetails = () => {
         }
     };
 
+
     const handleBid = async () => {
         if (!provider || !address) {
             toast({
@@ -53,9 +56,8 @@ const AuctionDetails = () => {
         try {
             console.log(`Placing bid for auction ID: ${id}, bid amount: ${bidAmount} GNOT`);
 
-            // Conversion du montant en ugnot (si c'est bien l'unité utilisée)
+
             const bidInUgnot = bidAmount * 1_000_000;
-            console.log(`Bid in ugnot: ${bidInUgnot}`);
 
             await AdenaService.sendTransaction(
                 [
@@ -66,7 +68,7 @@ const AuctionDetails = () => {
                             send: '',
                             pkg_path: Config.REALM_PATH,
                             func: 'AddBid',
-                            args: [`${id}`, `${bidAmount}`], // Montant converti en ugnot
+                            args: [`${id}`, `${bidInUgnot}`],
                         },
                     },
                 ],
@@ -92,6 +94,57 @@ const AuctionDetails = () => {
         }
     };
 
+
+    const handleEndAuction = async () => {
+        if (!provider || !address) {
+            toast({
+                title: 'Connection Error',
+                description: 'Please connect your wallet first.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            console.log(`Ending auction with ID: ${id}`);
+
+            await AdenaService.sendTransaction(
+                [
+                    {
+                        type: EMessageType.MSG_CALL,
+                        value: {
+                            caller: address,
+                            send: '',
+                            pkg_path: Config.REALM_PATH,
+                            func: 'EndAuction',
+                            args: [`${id}`],
+                        },
+                    },
+                ],
+                2000000
+            );
+
+            toast({
+                title: 'Auction Ended',
+                description: 'The auction has been ended successfully!',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error('Error ending auction:', error);
+            toast({
+                title: 'Error',
+                description: 'There was an error ending the auction.',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
     useEffect(() => {
         fetchAuctionDetails();
     }, []);
@@ -101,15 +154,14 @@ const AuctionDetails = () => {
     }
 
     return (
-        <Box p={6}>
+
+        <Box borderWidth="1px" borderRadius="lg" overflow="hidden" p={4} mb={4}>
             <Text fontSize="3xl" mb={4}>{auction.title}</Text>
             <Text>Description: {auction.description}</Text>
-            <Text>Owner: {auction.owner}</Text>
             <Text>Start Time: {new Date(auction.begin * 1000).toLocaleString()}</Text>
             <Text>End Time: {new Date(auction.deadline * 1000).toLocaleString()}</Text>
             <Text>Starting Price: {auction.firstPrice / 1_000_000} GNOT</Text>
             <Text>Number of Bids: {auction.bids}</Text>
-
             <Box mt={6}>
                 <Input
                     placeholder="Enter your bid (in GNOT)"
@@ -120,6 +172,11 @@ const AuctionDetails = () => {
                 <Button onClick={handleBid} colorScheme="blue" mt={4}>
                     Place Bid
                 </Button>
+                {address === auction.owner && (
+                    <Button onClick={handleEndAuction} colorScheme="red" mt={4}>
+                        End Auction
+                    </Button>
+                )}
             </Box>
         </Box>
     );

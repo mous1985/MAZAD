@@ -57,6 +57,12 @@ const theme = extendTheme({
       },
     },
   },
+  Flex: {
+    baseStyle: {
+      width: '100%',
+    },
+  },
+
   styles: {
     global: {
       body: {

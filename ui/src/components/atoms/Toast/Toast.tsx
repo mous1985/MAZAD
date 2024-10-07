@@ -2,6 +2,7 @@ import { EToastType, IToastProps } from './toast.types.ts';
 import { FC } from 'react';
 import { Box, Text } from '@chakra-ui/react';
 import { IoCheckmarkCircleSharp, IoCloseCircleSharp } from 'react-icons/io5';
+import React from 'react';
 
 const Toast: FC<IToastProps> = (props) => {
   const renderToastIcon = (type: EToastType) => {
