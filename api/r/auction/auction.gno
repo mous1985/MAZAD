@@ -82,41 +82,54 @@ func AddBid(id int, amount int64) string { // amount en int64
 
 	// Place the bid in the auction
 	if err := auction.AddBid(caller, amount); err != nil {
-		panic(err.Error())
+		panic(pau.ErrorToJSONString(err))
 	}
 
+	ufmt.Println("Bid placed successfully")
 	return "Bid placed successfully"
 }
 
-// EndAuction handles ending an auction identified by its ID
+// // EndAuction handles ending an auction identified by its ID and refund
+// func EndAuction(id int) string {
+// 	if id >= len(auctionList) || id < 0 {
+// 		panic("Invalid auction ID")
+// 	}
+// 	auction := auctionList[id]
+
+// 	// Call EndAuction to close the auction and get the winner and highest bid
+// 	winner, highestBid, err := auction.EndAuction()
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	// Handle fund transfers using the banker
+// 	banker := std.GetBanker(std.BankerTypeRealmSend)
+// 	pkgAddr := std.CurrentRealm().Addr()
+
+// 	// Refund all losing bidders
+// 	for bidder, deposit := range globalDeposits {
+// 		if bidder != winner {
+// 			banker.SendCoins(pkgAddr, bidder, std.Coins{{Amount: deposit, Denom: "ugnot"}}) // std.NewCoins(deposit)
+// 			// Reset the deposit for the bidder
+// 			delete(globalDeposits, bidder)
+// 		}
+// 	}
+
+// 	// Transfer the highest bid to the auction owner
+// 	banker.SendCoins(pkgAddr, auction.Ownable.Owner(), std.Coins{{Amount: highestBid, Denom: "ugnot"}})
+// 	// ufmt.Sprintf( "  auc.Price  "\n"))
+// 	return "Auction ended successfully"
+// }
+
+// EndAuction for testing
 func EndAuction(id int) string {
 	if id >= len(auctionList) || id < 0 {
 		panic("Invalid auction ID")
 	}
 	auction := auctionList[id]
-
-	// Call EndAuction to close the auction and get the winner and highest bid
-	winner, highestBid, err := auction.EndAuction()
-	if err != nil {
+	if err := auction.EndAuction(); err != nil {
 		panic(err.Error())
 	}
-
-	// Handle fund transfers using the banker
-	banker := std.GetBanker(std.BankerTypeRealmSend)
-	pkgAddr := std.CurrentRealm().Addr()
-
-	// Refund all losing bidders
-	for bidder, deposit := range globalDeposits {
-		if bidder != winner {
-			banker.SendCoins(pkgAddr, bidder, std.Coins{{Amount: deposit, Denom: "ugnot"}}) // std.NewCoins(deposit)
-			// Reset the deposit for the bidder
-			delete(globalDeposits, bidder)
-		}
-	}
-
-	// Transfer the highest bid to the auction owner
-	banker.SendCoins(pkgAddr, auction.Ownable.Owner(), std.Coins{{Amount: highestBid, Denom: "ugnot"}})
-	// ufmt.Sprintf( "  auc.Price  "\n"))
 	return "Auction ended successfully"
 }
 
