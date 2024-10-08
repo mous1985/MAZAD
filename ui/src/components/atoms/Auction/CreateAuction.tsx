@@ -15,11 +15,18 @@ const CreateAuction = ({ onAuctionCreated }: { onAuctionCreated: () => void }) =
   const [begin, setBegin] = useState<string>('');
   const [end, setEnd] = useState<string>('');
   const [image, setImage] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>('');
   const toast = useToast();
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setImage(event.target.files[0]);
+      const file = event.target.files[0];
+      setImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -62,6 +69,7 @@ const CreateAuction = ({ onAuctionCreated }: { onAuctionCreated: () => void }) =
                 `${beginTime}`,
                 `${endTime}`,
                 `${startingPrice}`,
+                imageUrl,
               ],
             },
           },

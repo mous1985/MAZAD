@@ -6,6 +6,7 @@ export interface IAuction {
   owner: string;
   firstPrice: number;
   bids: number;
+  img?: string;
 }
 
 

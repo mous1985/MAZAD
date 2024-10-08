@@ -8,13 +8,13 @@ interface AuctionCardProps {
 
 const AuctionCard = ({ auction }: AuctionCardProps) => {
     return (
-        <Box maxW='sm' borderWidth='1px' borderRadius='lg' overflow='hidden'>
-            <Image src='https://via.placeholder.com/150' alt='Auction Image' />
+        <Box maxW='sm' borderRadius='lg' overflow='hidden' display='flex' flexDirection='column'>
+            <Image src={auction.img || 'https://via.placeholder.com/200'} alt='Auction Image' width='100%' height='300px' objectFit='cover' />
 
-            <Box p='6'>
+            <Box p='6' flex='1' display='flex' flexDirection='column' justifyContent='flex-end'>
                 <Box display='flex' alignItems='baseline'>
                     <Badge borderRadius='full' px='2' colorScheme='teal'>
-                        New
+                        New Auction
                     </Badge>
                     <Box
                         color='gray.500'
@@ -27,7 +27,6 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                         {new Date(auction.begin * 1000).toLocaleString()} - {new Date(auction.deadline * 1000).toLocaleString()}
                     </Box>
                 </Box>
-
                 <Box
                     mt='1'
                     fontWeight='semibold'
@@ -37,7 +36,6 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                 >
                     {auction.title}
                 </Box>
-
                 <Box>
                     <Text>Description: {auction.description}</Text>
                 </Box>

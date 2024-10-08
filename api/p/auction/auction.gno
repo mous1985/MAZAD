@@ -19,6 +19,7 @@ type Auction struct {
 	End         time.Time
 	Price       int64
 	Bids        []*Bid
+	Img         string
 	// Deposits    map[std.Address]int64
 	// State string // "upcoming", "ongoing", or "closed"
 }
@@ -37,6 +38,7 @@ func NewAuction(
 	begin time.Time,
 	end time.Time,
 	minPrice int64,
+	img string,
 ) *Auction {
 	return &Auction{
 		Title:       title,
@@ -46,6 +48,7 @@ func NewAuction(
 		End:         end,
 		Price:       minPrice,
 		Bids:        []*Bid{},
+		Img:         img,
 		// State:       "upcoming",
 	}
 }
@@ -162,7 +165,8 @@ func AuctionToJSONString(auction *Auction) string {
 	sb.WriteString(`"deadline":"` + strconv.Itoa(int(auction.End.Unix())) + `",`)
 	sb.WriteString(`"owner":"` + auction.Ownable.Owner().String() + `",`)
 	sb.WriteString(`"firstPrice":"` + strconv.Itoa(int(auction.Price)) + `",`)
-	sb.WriteString(`"bids":` + strconv.Itoa(len(auction.Bids)))
+	sb.WriteString(`"bids":` + strconv.Itoa(len(auction.Bids)) + `,`)
+	sb.WriteString(`"img":"` + escapeString(auction.Img) + `"`)
 	sb.WriteString("}")
 
 	return sb.String()

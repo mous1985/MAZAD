@@ -30,12 +30,12 @@ func init() {
 }
 
 // CreateAuction handles creating a new auction and appends it to the auctionList
-func CreateAuction(title, description string, begin int64, end int64, price int64) string {
+func CreateAuction(title, description string, begin int64, end int64, price int64, img string) string {
 	owner := std.GetOrigCaller()
 	beginTime := time.Unix(begin, 0)
 	endTime := time.Unix(end, 0)
 	priceAmount := price
-	auction := pau.NewAuction(title, owner, description, beginTime, endTime, priceAmount)
+	auction := pau.NewAuction(title, owner, description, beginTime, endTime, priceAmount, img)
 	auctionList = append(auctionList, auction)
 	return "Auction created successfully"
 }
