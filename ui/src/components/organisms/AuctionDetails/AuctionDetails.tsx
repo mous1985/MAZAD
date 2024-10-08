@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useState, useEffect, useContext } from 'react';
-import { Box, Text, Input, Button, useToast } from '@chakra-ui/react';
+import { Box, Text, Input, Button, useToast, Image } from '@chakra-ui/react';
 import Config from '../../../config.ts';
 import ProviderContext from '../../../context/ProviderContext.ts';
 import AccountContext from '../../../context/AccountContext.ts';
@@ -17,7 +17,7 @@ const AuctionDetails = () => {
     const [bidAmount, setBidAmount] = useState<number>(0);
     const toast = useToast();
 
-    // Fonction pour récupérer les détails d'une enchère spécifique
+    // Function to fetch auction details
     const fetchAuctionDetails = async () => {
         if (!provider) {
             throw new Error('Invalid chain RPC URL');
@@ -26,7 +26,7 @@ const AuctionDetails = () => {
         try {
             const response = await provider.evaluateExpression(
                 Config.REALM_PATH,
-                `GetAuctionById(${id})`,  // Ici on récupère une enchère spécifique
+                `GetAuctionById(${id})`,
             );
 
             const auctionDetails = parseAuctionByIdResponse(response);
@@ -39,7 +39,6 @@ const AuctionDetails = () => {
             console.error('Error fetching auction details:', error);
         }
     };
-
 
     const handleBid = async () => {
         if (!provider || !address) {
@@ -55,7 +54,6 @@ const AuctionDetails = () => {
 
         try {
             console.log(`Placing bid for auction ID: ${id}, bid amount: ${bidAmount} GNOT`);
-
 
             const bidInUgnot = bidAmount * 1_000_000;
 
@@ -93,7 +91,6 @@ const AuctionDetails = () => {
             });
         }
     };
-
 
     const handleEndAuction = async () => {
         if (!provider || !address) {
@@ -154,9 +151,11 @@ const AuctionDetails = () => {
     }
 
     return (
-
-        <Box borderWidth="1px" borderRadius="lg" overflow="hidden" p={4} mb={4}>
+        <Box borderWidth="1px" borderRadius="lg" overflow="hidden" p={4} mb={4} maxW="600px" mx="auto">
             <Text fontSize="3xl" mb={4}>{auction.title}</Text>
+            <Box borderWidth="1px" borderRadius="lg" overflow="hidden" mb={4} width="100%" height="300px">
+                <Image src={auction.img || 'https://via.placeholder.com/300'} alt='Auction Image' width='100%' height='100%' objectFit='cover' />
+            </Box>
             <Text>Description: {auction.description}</Text>
             <Text>Start Time: {new Date(auction.begin * 1000).toLocaleString()}</Text>
             <Text>End Time: {new Date(auction.deadline * 1000).toLocaleString()}</Text>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Image, Badge, Text } from '@chakra-ui/react';
 import { IAuction } from './auction.types';
 
