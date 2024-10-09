@@ -82,7 +82,7 @@ func AddBid(id int, amount int64) string { // amount en int64
 
 	// Place the bid in the auction
 	if err := auction.AddBid(caller, amount); err != nil {
-		panic(pau.ErrorToJSONString(err))
+		panic(err.Error())
 	}
 
 	ufmt.Println("Bid placed successfully")
@@ -138,7 +138,7 @@ func GetAuctions() string {
 		return "[]"
 	}
 
-	return pau.AuctionsToJSONString(auctionList)
+	return pau.EncodeAuctionList(auctionList), nil
 }
 
 func GetAuctionById(id int) string {
@@ -146,7 +146,7 @@ func GetAuctionById(id int) string {
 		panic("Invalid auction ID")
 	}
 
-	return pau.AuctionToJSONString(auctionList[id])
+	return pau.EncodeAuction(auctionList[id])
 }
 
 func Render(path string) string {

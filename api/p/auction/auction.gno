@@ -3,7 +3,6 @@ package auction
 import (
 	"std"
 	"strconv"
-	"strings"
 	"time"
 
 	"gno.land/p/demo/ownable"
@@ -138,55 +137,55 @@ func (a *Auction) EndAuction() error {
 	return nil
 }
 
-func AuctionsToJSONString(auctions []*Auction) string {
-	var sb strings.Builder
-	sb.WriteString("[")
+// func AuctionsToJSONString(auctions []*Auction) string {
+// 	var sb strings.Builder
+// 	sb.WriteString("[")
 
-	for i, auction := range auctions {
-		if i > 0 {
-			sb.WriteString(",")
-		}
+// 	for i, auction := range auctions {
+// 		if i > 0 {
+// 			sb.WriteString(",")
+// 		}
 
-		sb.WriteString(AuctionToJSONString(auction))
-	}
-	sb.WriteString("]")
+// 		sb.WriteString(AuctionToJSONString(auction))
+// 	}
+// 	sb.WriteString("]")
 
-	return sb.String()
-}
+// 	return sb.String()
+// }
 
 // AuctionToJSONString returns a Auction formatted as a JSON string
-func AuctionToJSONString(auction *Auction) string {
-	var sb strings.Builder
+// func AuctionToJSONString(auction *Auction) string {
+// 	var sb strings.Builder
 
-	sb.WriteString("{")
-	sb.WriteString(`"title":"` + escapeString(auction.Title) + `",`)
-	sb.WriteString(`"description":"` + escapeString(auction.Description) + `",`)
-	sb.WriteString(`"begin":"` + strconv.Itoa(int(auction.Begin.Unix())) + `",`)
-	sb.WriteString(`"deadline":"` + strconv.Itoa(int(auction.End.Unix())) + `",`)
-	sb.WriteString(`"owner":"` + auction.Ownable.Owner().String() + `",`)
-	sb.WriteString(`"firstPrice":"` + strconv.Itoa(int(auction.Price)) + `",`)
-	sb.WriteString(`"bids":` + strconv.Itoa(len(auction.Bids)) + `,`)
-	sb.WriteString(`"img":"` + escapeString(auction.Img) + `"`)
-	sb.WriteString("}")
+// 	sb.WriteString("{")
+// 	sb.WriteString(`"title":"` + escapeString(auction.Title) + `",`)
+// 	sb.WriteString(`"description":"` + escapeString(auction.Description) + `",`)
+// 	sb.WriteString(`"begin":"` + strconv.Itoa(int(auction.Begin.Unix())) + `",`)
+// 	sb.WriteString(`"deadline":"` + strconv.Itoa(int(auction.End.Unix())) + `",`)
+// 	sb.WriteString(`"owner":"` + auction.Ownable.Owner().String() + `",`)
+// 	sb.WriteString(`"firstPrice":"` + strconv.Itoa(int(auction.Price)) + `",`)
+// 	sb.WriteString(`"bids":` + strconv.Itoa(len(auction.Bids)) + `,`)
+// 	sb.WriteString(`"img":"` + escapeString(auction.Img) + `"`)
+// 	sb.WriteString("}")
 
-	return sb.String()
-}
+// 	return sb.String()
+// }
 
-func ErrorToJSONString(err error) string {
-	if err == nil {
-		return `{"error": null}`
-	}
+// func ErrorToJSONString(err error) string {
+// 	if err == nil {
+// 		return `{"error": null}`
+// 	}
 
-	var sb strings.Builder
+// 	var sb strings.Builder
 
-	sb.WriteString("{")
-	sb.WriteString(`"error": "` + escapeString(err.Error()) + `"`)
-	sb.WriteString("}")
+// 	sb.WriteString("{")
+// 	sb.WriteString(`"error": "` + escapeString(err.Error()) + `"`)
+// 	sb.WriteString("}")
 
-	return sb.String()
-}
+// 	return sb.String()
+// }
 
-// escapeString escapes quotes in a string for JSON compatibility.
-func escapeString(s string) string {
-	return strings.ReplaceAll(s, `"`, `\"`)
-}
+// // escapeString escapes quotes in a string for JSON compatibility.
+// func escapeString(s string) string {
+// 	return strings.ReplaceAll(s, `"`, `\"`)
+// }

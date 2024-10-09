@@ -14,9 +14,9 @@ func TestNewAuction(t *testing.T) {
 	owner := testutils.TestAddress("owner")
 	begin := time.Now().Add(1 * time.Hour)
 	end := time.Now().Add(24 * time.Hour)
-	minPrice := std.NewCoin("testcoin", 100)
+	minPrice := int64(100)
 
-	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice)
+	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice, "url")
 
 	uassert.Equal(t, "Test Auction", auction.Title, "Auction title mismatch")
 	uassert.Equal(t, owner, auction.Ownable.Owner(), "Auction owner mismatch")
@@ -24,7 +24,7 @@ func TestNewAuction(t *testing.T) {
 	uassert.Equal(t, begin.String(), auction.Begin.String(), "Auction begin time mismatch")
 	uassert.Equal(t, end.String(), auction.End.String(), "Auction end time mismatch")
 	uassert.True(t, auction.Price.IsEqual(minPrice), "Auction price mismatch")
-	uassert.Equal(t, "upcoming", auction.State, "Auction state mismatch")
+	uassert.Equal(t, "url", auction.Img, "image mismatch")
 }
 
 func TestAddBid(t *testing.T) {
