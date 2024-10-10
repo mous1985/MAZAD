@@ -34,7 +34,7 @@ const Sidebar = () => {
                 <Flex direction="column" alignItems="flex-start" opacity={isVisible ? 1 : 0} transition="opacity 0.5s">
                     <Box mb={8}>
                         <Link as={RouterLink} to="/" fontWeight="bold" fontSize="xl" _hover={{ textDecoration: 'none', color: 'teal.300' }}>
-                            Auction Platform
+                            MAZAD
                         </Link>
                     </Box>
                     <VStack align="flex-start" spacing={8}>

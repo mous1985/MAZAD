@@ -15,15 +15,23 @@ const AuctionCard = ({ auction }: AuctionCardProps) => {
                     <Badge borderRadius='full' px='2' colorScheme='teal'>
                         New Auction
                     </Badge>
-                    <Box
-                        color='gray.500'
-                        fontWeight='semibold'
-                        letterSpacing='wide'
-                        fontSize='xs'
-                        textTransform='uppercase'
-                        ml='2'
-                    >
-                        {new Date(auction.begin * 1000).toLocaleString()} - {new Date(auction.deadline * 1000).toLocaleString()}
+                    <Box>
+                        <Text color='gray.500'
+                            fontWeight='semibold'
+                            letterSpacing='wide'
+                            fontSize='xs'
+                            textTransform='uppercase'
+                            ml='2'>
+                            {new Date(auction.begin * 1000).toLocaleString()}
+                        </Text>
+                        <Text color='gray.500'
+                            fontWeight='semibold'
+                            letterSpacing='wide'
+                            fontSize='xs'
+                            textTransform='uppercase'
+                            ml='2'>
+                            {new Date(auction.deadline * 1000).toLocaleString()}
+                        </Text>
                     </Box>
                 </Box>
                 <Box
