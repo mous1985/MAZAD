@@ -48,7 +48,7 @@ func NewAuction(
 		Price:       minPrice,
 		Bids:        []*Bid{},
 		Img:         img,
-		// State:       "upcoming",
+		// State:       state
 	}
 }
 
@@ -116,6 +116,18 @@ func (a *Auction) GetPaginatedBids(page, pageSize int) ([]*Bid, error) {
 //		winner := a.Bids[len(a.Bids)-1].Bidder
 //		return winner, highestBid, nil
 //	}
+func (a *Auction) updateAuctionStates() {
+	if time.Now().After(a.End) {
+		a.State = "closed"
+	}
+	if time.Now().After(a.Begin) && time.Now().Before(a.End) {
+		a.State = "ongoing"
+	}
+	if time.Now().Before(a.Begin) {
+		a.State = "upcoming"
+	}
+}
+
 func (a *Auction) EndAuction() error {
 	if err := a.Ownable.CallerIsOwner(); err != nil {
 		return err
@@ -123,17 +135,16 @@ func (a *Auction) EndAuction() error {
 	if time.Now().Before(a.End) {
 		return ufmt.Errorf("auction: EndAuction: auction cannot end before the end time")
 	}
-	if time.Now().After(a.End) {
-		return ufmt.Errorf("auction: EndAuction: auction is already closed")
-	}
-	if len(a.Bids) == 0 {
-		std.Emit("AuctionEndedNoBids", "auction", a.Title)
-		return ufmt.Errorf("auction: EndAuction: auction ended with no bids")
-	}
 
 	highestBid := a.Price
-	winner := a.Bids[len(a.Bids)-1].Bidder
-	std.Emit("AuctionEnded", "winner", winner.String(), "amount", strconv.Itoa(int(highestBid)))
+
+	if len(a.Bids) > 0 {
+		winner := a.Bids[len(a.Bids)-1].Bidder
+		std.Emit("AuctionEnded", "winner", winner.String(), "amount", strconv.Itoa(int(highestBid)))
+	} else {
+		std.Emit("AuctionEndedNoBids", "auction", a.Title)
+	}
+
 	return nil
 }
 
