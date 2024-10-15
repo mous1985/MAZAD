@@ -138,15 +138,35 @@ func GetAuctions() string {
 		return "[]"
 	}
 
-	return pau.EncodeAuctionList(auctionList), nil
+	node, err := pau.EncodeAuctionList(auctionList)
+	if err != nil {
+		return "Error encoding auction list: " + err.Error()
+	}
+
+	jsonStr, err := pau.ToJSONString(node)
+	if err != nil {
+		return "Error converting to JSON string: " + err.Error()
+	}
+
+	return jsonStr
 }
 
 func GetAuctionById(id int) string {
 	if id >= len(auctionList) || id < 0 {
-		panic("Invalid auction ID")
+		return "Invalid auction ID"
 	}
 
-	return pau.EncodeAuction(auctionList[id])
+	node, err := pau.EncodeAuction(auctionList[id])
+	if err != nil {
+		return "Error encoding auction: " + err.Error()
+	}
+
+	jsonStr, err := pau.ToJSONString(node)
+	if err != nil {
+		return "Error converting to JSON string: " + err.Error()
+	}
+
+	return jsonStr
 }
 
 func Render(path string) string {
