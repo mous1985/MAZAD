@@ -83,7 +83,6 @@ func DecodeAuction(node *json.Node) (*Auction, error) {
 	}
 	img := imgNode.MustString()
 
-	// Crée l'enchère en utilisant les données décodées
 	auction := NewAuction(title, std.Address(owner), description, begin, deadline, firstPrice, img)
 	return auction, nil
 }
