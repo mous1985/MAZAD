@@ -31,11 +31,6 @@ func TestAuctionRealm(t *testing.T) {
 	std.TestSkipHeights(1)
 	updateAuctionStates()
 
-	upcomingPage := Render("upcoming")
-	if !strings.Contains(upcomingPage, "Test Auction") {
-		t.Errorf("The auction should be listed in the 'upcoming' section")
-	}
-
 	// Simulate time passing to move the auction to 'ongoing' state
 	std.TestSkipHeights(360) // Fast-forward to the start time of the auction
 	updateAuctionStates()

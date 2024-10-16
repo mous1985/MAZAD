@@ -4,8 +4,7 @@ import { Box, Text, Button, Grid } from '@chakra-ui/react';
 import Config from '../../../config.ts';
 import ProviderContext from '../../../context/ProviderContext.ts';
 import AccountContext from '../../../context/AccountContext.ts';
-import Connect from '../../atoms/Connect/Connect';
-import AuctionCard from '../../atoms/Auction/AuctionCard'; // Import AuctionCard
+import AuctionCard from '../../atoms/Auction/AuctionCard';
 import { IAuction } from '../../atoms/Auction/auction.types';
 import { parseAuctionFetchResponse } from './parseAuctionFetchResponse';
 
@@ -39,7 +38,7 @@ const Home = () => {
   }, []);
 
   const handleCreateAuctionClick = () => {
-    navigate('/create-auction'); // Redirection vers la page de création d'enchères
+    navigate('/create-auction');
   };
 
   return (

@@ -1,7 +1,7 @@
-import { EPostSort, EPostTime } from '../../organisms/Home/home.types.ts';
+// import { EPostSort, EPostTime } from '../../organisms/Home/home.types.ts';
 
-export interface IHeaderProps {
-  setPostSort: (type: EPostSort) => void;
-  setPostTime: (time: EPostTime) => void;
-  resetHomepage: () => void;
-}
+// export interface IHeaderProps {
+//   setPostSort: (type: EPostSort) => void;
+//   setPostTime: (time: EPostTime) => void;
+//   resetHomepage: () => void;
+// }

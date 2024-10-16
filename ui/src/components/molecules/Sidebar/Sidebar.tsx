@@ -15,7 +15,6 @@ const Sidebar = () => {
 
     return (
         <>
-            {/* Sidebar */}
             <Box
                 bg="rgba(0, 0, 0, 0.01)"
                 color="white"

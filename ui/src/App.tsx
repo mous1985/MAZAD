@@ -47,7 +47,7 @@ const App = () => {
             <Header />
             <Flex>
               <Sidebar /> {/* Add the Sidebar component */}
-              <Box as="main" className="main-content" ml={{ base: 0, md: "250px" }} p={4}>
+              <Box as="main" className="main-content" ml={{ base: 0, md: "200px" }} p={4}>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/auction/:id" element={<AuctionDetails />} />
