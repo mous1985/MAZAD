@@ -116,3 +116,38 @@ func (a *Auction) AddBid(bidder std.Address, amount std.Coin) error {
 	a.placeBid(bidder, amount)
 	return nil
 }
+
+// EndAuction ends the auction and emits an event with the winner and the highest bid amount.
+// If there are no bids, it emits an event indicating no bids were placed.
+func (a *Auction) EndAuction() error {
+	if err := a.Owner.CallerIsOwner(); err != nil {
+		return err
+	}
+	if time.Now().Before(a.End) {
+		return ufmt.Errorf("EndAuction: auction cannot end before the end time")
+	}
+
+	if len(a.Bids) == 0 {
+		std.Emit(
+			"AuctionEnded",
+			"auction",
+			a.Title,
+			"noBids",
+		)
+		return nil
+	}
+
+	highestBid := a.Bids[len(a.Bids)-1].Amount
+	winner := a.Bids[len(a.Bids)-1].Bidder
+	std.Emit(
+		"AuctionEnded",
+		"auction",
+		a.Title,
+		"winner",
+		winner.String(),
+		"amount",
+		highestBid.String(),
+	)
+
+	return nil
+}

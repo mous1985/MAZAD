@@ -129,3 +129,42 @@ func TestAddBid(t *testing.T) {
 	err = auction.AddBid(bidder1, bidAmount1)
 	uassert.ErrorContains(t, err, "auction has already ended", "Expected error for auction ended")
 }
+func TestEndAuction(t *testing.T) {
+	owner := testutils.TestAddress("owner")
+	bidder := testutils.TestAddress("bidder")
+	begin := time.Now().Add(-2 * time.Hour) // Set begin time to the past
+	end := time.Now().Add(-1 * time.Hour)   // Set end time to the past
+	minPrice := std.NewCoin("ugnot", 100)
+
+	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice, "url")
+
+	// Simulate the auction running and place a bid
+	std.TestSetOrigCaller(bidder)
+	bidAmount := std.NewCoin("ugnot", 150)
+	auction.Begin = time.Now().Add(-2 * time.Hour) // Ensure auction has started
+	auction.End = time.Now().Add(1 * time.Hour)    // Ensure auction is not ended
+	err := auction.AddBid(bidder, bidAmount)
+	uassert.NoError(t, err, "Unexpected error when placing a bid")
+
+	// Set the auction end time to the past to simulate the auction ending
+	auction.End = time.Now().Add(-1 * time.Second)
+
+	// End the auction
+	std.TestSetOrigCaller(owner)
+	err = auction.EndAuction()
+
+	// Ensure no error occurs when ending the auction with bids
+	uassert.NoError(t, err, "Expected no error when auction ends with bids")
+
+	// Check that the winner is the correct bidder
+	if len(auction.Bids) > 0 {
+		highestBid := auction.Price.Amount
+		winner := auction.Bids[len(auction.Bids)-1].Bidder
+		uassert.Equal(t, bidder, winner, "Winner should be the highest bidder")
+
+		// Check that the highest bid is 150 tokens
+		uassert.Equal(t, bidAmount.Amount, highestBid, "Highest bid should be 150 ")
+	} else {
+		t.Fatalf("Expected at least one bid, but got none")
+	}
+}
