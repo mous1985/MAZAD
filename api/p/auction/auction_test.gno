@@ -64,3 +64,68 @@ func TestValidateBidAmount(t *testing.T) {
 	err = auction.validateBidAmount(bidAmount)
 	uassert.ErrorContains(t, err, "bid amount must be positive", "Expected error for invalid bid amount")
 }
+func TestPlaceBid(t *testing.T) {
+	owner := testutils.TestAddress("owner")
+	bidder := testutils.TestAddress("bidder")
+	begin := time.Now().Add(-1 * time.Hour) // Auction started 1 hour ago
+	end := time.Now().Add(23 * time.Hour)   // Auction ends in 23 hours
+	minPrice := std.NewCoin("ugnot", 100)
+	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice, "url")
+
+	// Place a bid
+	bidAmount := std.NewCoin("ugnot", 150)
+	auction.placeBid(bidder, bidAmount)
+
+	// Verify the bid was added
+	uassert.Equal(t, 1, len(auction.Bids), "Expected one bid in the auction")
+	uassert.Equal(t, bidder, auction.Bids[0].Bidder, "Bidder address mismatch")
+	uassert.Equal(t, bidAmount.Amount, auction.Bids[0].Amount.Amount, "Bid amount mismatch")
+	uassert.Equal(t, bidAmount.Denom, auction.Bids[0].Amount.Denom, "Bid denom mismatch")
+
+	// Verify the auction price was updated
+	uassert.Equal(t, bidAmount.Amount, auction.Price.Amount, "Auction price mismatch")
+	uassert.Equal(t, bidAmount.Denom, auction.Price.Denom, "Auction denom mismatch")
+}
+func TestAddBid(t *testing.T) {
+	owner := testutils.TestAddress("owner")
+	bidder1 := testutils.TestAddress("bidder1")
+	bidder2 := testutils.TestAddress("bidder2")
+	begin := time.Now().Add(-1 * time.Hour) // Auction started 1 hour ago
+	end := time.Now().Add(23 * time.Hour)   // Auction ends in 23 hours
+	minPrice := std.NewCoin("ugnot", 100)
+	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice, "url")
+
+	// Test placing a valid bid
+	bidAmount1 := std.NewCoin("ugnot", 200)
+	err := auction.AddBid(bidder1, bidAmount1)
+	uassert.NoError(t, err, "Expected no error for valid bid")
+	uassert.Equal(t, bidAmount1.Amount, auction.Price.Amount, "Auction price mismatch after first bid")
+	uassert.Equal(t, 1, len(auction.Bids), "Expected one bid")
+	uassert.Equal(t, bidder1, auction.Bids[0].Bidder, "Bidder mismatch")
+	uassert.Equal(t, bidAmount1.Amount, auction.Bids[0].Amount.Amount, "Bid amount mismatch")
+
+	// Test placing a higher bid
+	bidAmount2 := std.NewCoin("ugnot", 300)
+	err = auction.AddBid(bidder2, bidAmount2)
+	uassert.NoError(t, err, "Expected no error for valid higher bid")
+	uassert.Equal(t, bidAmount2.Amount, auction.Price.Amount, "Auction first price mismatch after second bid")
+	uassert.Equal(t, 2, len(auction.Bids), "Expected two bids")
+	uassert.Equal(t, bidder2, auction.Bids[1].Bidder, "Bidder mismatch")
+	uassert.Equal(t, bidAmount2.Amount, auction.Bids[1].Amount.Amount, "Bid amount mismatch")
+
+	// Test placing a bid lower than the current highest bid
+	bidAmount3 := std.NewCoin("ugnot", 250)
+	err = auction.AddBid(bidder1, bidAmount3)
+	uassert.ErrorContains(t, err, "bid amount must be higher than the last bid", "Expected error for lower bid")
+
+	// Test placing a bid when the auction is not active (before it starts)
+	auction.Begin = time.Now().Add(1 * time.Hour) // Auction starts in 1 hour
+	err = auction.AddBid(bidder1, bidAmount1)
+	uassert.ErrorContains(t, err, "auction has not started yet", "Expected error for auction not started")
+
+	// Test placing a bid when the auction is not active (after it ends)
+	auction.Begin = time.Now().Add(-2 * time.Hour) // Auction started 2 hours ago
+	auction.End = time.Now().Add(-1 * time.Hour)   // Auction ended 1 hour ago
+	err = auction.AddBid(bidder1, bidAmount1)
+	uassert.ErrorContains(t, err, "auction has already ended", "Expected error for auction ended")
+}
