@@ -4,6 +4,8 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/p/demo/ownable"
 )
 
@@ -30,7 +32,7 @@ type Auction struct {
 // Bid represents a bid in the auction with a bidder's address and the bid amount and denom.
 type Bid struct {
 	Bidder std.Address
-	Amount int64
+	Amount std.Coin
 }
 
 // NewAuction creates a new auction
@@ -53,6 +55,36 @@ func NewAuction(
 		Bids:        []*Bid{},
 		Img:         img,
 	}
+}
+
+// auctionIsActive checks if the auction is currently active.
+func (a *Auction) auctionIsActive() error {
+	now := time.Now()
+	if now.Before(a.Begin) {
+		return ufmt.Errorf("auctionIsActive: auction has not started yet")
+	}
+	if now.After(a.End) {
+		return ufmt.Errorf("auctionIsActive: auction has already ended")
+	}
+	return nil
+}
+
+// validateBidAmount checks if the provided bid amount is valid.
+func (a *Auction) validateBidAmount(amount std.Coin) error {
+	if !amount.IsPositive() {
+		return ufmt.Errorf("AddBid: bid amount must be positive")
+	}
+	if len(a.Bids) > 0 {
+		lastBid := a.Bids[len(a.Bids)-1]
+		if !amount.IsGTE(lastBid.Amount) {
+			return ufmt.Errorf("AddBid: bid amount must be higher than the last bid")
+		}
+	} else {
+		if !amount.IsGTE(a.Price) {
+			return ufmt.Errorf("AddBid: bid amount must be higher than the starting price")
+		}
+	}
+	return nil
 }
 
 // func (a *Auction) AddBid(bidder std.Address, amount int64) error {

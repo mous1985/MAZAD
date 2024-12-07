@@ -26,114 +26,41 @@ func TestNewAuction(t *testing.T) {
 	uassert.Equal(t, "url", auction.Img, "Image mismatch")
 }
 
-// func TestAddBid(t *testing.T) {
-// 	owner := testutils.TestAddress("owner")
-// 	bidder1 := testutils.TestAddress("bidder1")
-// 	bidder2 := testutils.TestAddress("bidder2")
-// 	begin := time.Now().Add(1 * time.Hour)
-// 	end := time.Now().Add(24 * time.Hour)
-// 	minPrice := int64(100)
-// 	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, int64(minPrice), "url")
-// 	std.TestSetOrigCaller(bidder1)
+func TestAuctionIsActive(t *testing.T) {
+	owner := testutils.TestAddress("owner")
+	begin := time.Now().Add(1 * time.Hour)
+	end := time.Now().Add(24 * time.Hour)
+	minPrice := std.NewCoin("ugnot", 100)
+	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice, "url")
 
-// 	// Test before auction starts
-// 	err := auction.AddBid(bidder1, 200)
-// 	uassert.ErrorContains(t, err, "auction has not started yet", "Expected 'auction has not started yet' error")
+	// Test before auction starts
+	err := auction.auctionIsActive()
+	uassert.ErrorContains(t, err, "auction has not started yet", "Expected error for auction not started")
 
-// 	// Test successful bid after auction begins
-// 	auction.Begin = time.Now().Add(-1 * time.Second)
-// 	auction.End = time.Now().Add(1 * time.Hour) // Ensure auction is not ended
-// 	err = auction.AddBid(bidder1, 200)
-// 	uassert.NoError(t, err, "Expected no error for valid bid")
-// 	uassert.Equal(t, int64(200), auction.Price, "Auction price mismatch after first bid")
-// 	uassert.Equal(t, 1, len(auction.Bids), "Expected one bid")
-// 	uassert.Equal(t, bidder1, auction.Bids[0].Bidder, "Bidder mismatch")
+	// Simulate auction is active
+	auction.Begin = time.Now().Add(-1 * time.Hour)
+	auction.End = time.Now().Add(1 * time.Hour)
+	err = auction.auctionIsActive()
+	uassert.NoError(t, err, "Expected no error for auction active")
 
-// 	std.TestSetOrigCaller(bidder2)
+	// Simulate auction has ended
+	auction.End = time.Now().Add(-1 * time.Hour)
+	err = auction.auctionIsActive()
+	uassert.ErrorContains(t, err, "auction has already ended", "Expected error for auction ended")
+}
 
-// 	// Test higher bid
-// 	err = auction.AddBid(bidder2, 300)
-// 	uassert.NoError(t, err, "Expected no error for valid higher bid")
-// 	uassert.Equal(t, int64(300), auction.Price, "Auction price mismatch after second bid")
-// 	uassert.Equal(t, 2, len(auction.Bids), "Expected two bids")
-// 	uassert.Equal(t, bidder2, auction.Bids[1].Bidder, "Bidder mismatch")
-
-// 	// Test bid lower than current price
-// 	err = auction.AddBid(bidder1, 250)
-// 	uassert.ErrorContains(t, err, "bid amount must be higher than the current highest bid", "Expected error for lower bid")
-// }
-
-// // func TestGetPaginatedBids(t *testing.T) {
-// // 	owner := testutils.TestAddress("owner")
-// // 	begin := time.Now().Add(-1 * time.Hour)
-// // 	end := time.Now().Add(1 * time.Hour)
-// // 	minPrice := std.NewCoin("default", 100)
-
-// // 	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice)
-
-// // 	// Add some bids
-// // 	bidder1 := testutils.TestAddress("bidder1")
-// // 	bidder2 := testutils.TestAddress("bidder2")
-// // 	bidder3 := testutils.TestAddress("bidder3")
-
-// // 	auction.AddBid(bidder1, std.NewCoin("default", 150))
-// // 	auction.AddBid(bidder2, std.NewCoin("default", 200))
-// // 	auction.AddBid(bidder3, std.NewCoin("default", 250))
-
-// // 	// Test the first page with a size of 2
-// // 	bids, err := auction.GetPaginatedBids(1, 2)
-// // 	uassert.NoError(t, err, "Expected no error on fetching first page of bids")
-// // 	uassert.Equal(t, 2, len(bids), "Expected 2 bids on the first page")
-
-// // 	// Test the second page with a size of 2
-// // 	bids, err = auction.GetPaginatedBids(2, 2)
-// // 	uassert.NoError(t, err, "Expected no error on fetching second page of bids")
-// // 	uassert.Equal(t, 1, len(bids), "Expected 1 bid on the second page")
-
-// // 	// Test invalid page
-// // 	bids, err = auction.GetPaginatedBids(3, 2)
-// // 	uassert.ErrorContains(t, err, "page exceeds total number of bids", "Expected error 'page exceeds total number of bids' for invalid page")
-
-// // 	// Test invalid pagination parameters
-// // 	_, err = auction.GetPaginatedBids(0, 2)
-// // 	uassert.ErrorContains(t, err, "invalid pagination parameters", "Expected error 'invalid pagination parameters' for invalid pagination")
-// // }
-
-// func TestEndAuction(t *testing.T) {
-// 	owner := testutils.TestAddress("owner")
-// 	bidder := testutils.TestAddress("bidder")
-// 	begin := time.Now().Add(-2 * time.Hour) // Set begin time to the past
-// 	end := time.Now().Add(-1 * time.Hour)   // Set end time to the past
-// 	minPrice := int64(100)
-
-// 	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice, "url")
-
-// 	// Simulate the auction running and place a bid
-// 	std.TestSetOrigCaller(bidder)
-// 	auction.Begin = time.Now().Add(-2 * time.Hour) // Ensure auction has started
-// 	auction.End = time.Now().Add(1 * time.Hour)    // Ensure auction is not ended
-// 	err := auction.AddBid(bidder, 150)
-// 	uassert.NoError(t, err, "Unexpected error when placing a bid")
-
-// 	// Set the auction end time to the past to simulate the auction ending
-// 	auction.End = time.Now().Add(-1 * time.Second)
-
-// 	// End the auction
-// 	std.TestSetOrigCaller(owner)
-// 	err = auction.EndAuction()
-
-// 	// Ensure no error occurs when ending the auction with bids
-// 	uassert.NoError(t, err, "Expected no error when auction ends with bids")
-
-// 	// Check that the winner is the correct bidder
-// 	if len(auction.Bids) > 0 {
-// 		highestBid := auction.Price
-// 		winner := auction.Bids[len(auction.Bids)-1].Bidder
-// 		uassert.Equal(t, bidder, winner, "Winner should be the highest bidder")
-
-// 		// Check that the highest bid is 150 tokens
-// 		uassert.Equal(t, int64(150), highestBid, "Highest bid should be 150 tokens")
-// 	} else {
-// 		t.Fatalf("Expected at least one bid, but got none")
-// 	}
-// }
+func TestValidateBidAmount(t *testing.T) {
+	owner := testutils.TestAddress("owner")
+	begin := time.Now().Add(1 * time.Hour)
+	end := time.Now().Add(24 * time.Hour)
+	minPrice := std.NewCoin("ugnot", 100)
+	auction := NewAuction("Test Auction", owner, "This is a test auction", begin, end, minPrice, "url")
+	bidAmount := std.NewCoin("ugnot", 100)
+	// Test valid bid amount
+	err := auction.validateBidAmount(bidAmount)
+	uassert.NoError(t, err, "Expected no error for valid bid amount")
+	bidAmount = std.NewCoin("ugnot", 0)
+	// Test invalid bid amount
+	err = auction.validateBidAmount(bidAmount)
+	uassert.ErrorContains(t, err, "bid amount must be positive", "Expected error for invalid bid amount")
+}
