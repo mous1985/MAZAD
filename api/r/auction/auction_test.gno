@@ -2,109 +2,89 @@ package auction
 
 import (
 	"std"
-	"strings"
 	"testing"
 	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 )
 
-func resetCurrentTime() {
-	currentTime = time.Time{}
+var (
+	user1 = testutils.TestAddress("user1")
+	user2 = testutils.TestAddress("user2")
+)
+
+func TestCreateAuction(t *testing.T) {
+	// Initialize the test environment for user1
+	std.TestSetRealm(std.NewUserRealm(user1))
+
+	// Create a new auction
+	title := "Test Auction"
+	description := "This is a test auction"
+	begin := time.Now().Unix()
+	end := time.Now().Add(time.Hour * 24).Unix()
+	amount := int64(100)
+	denom := "ugnot"
+
+	result := CreateAuction(title, description, begin, end, amount, denom)
+	uassert.Equal(t, "Auction created successfully.", result)
+	uassert.Equal(t, 1, len(auctionList)) // Check that the auction was added to the list
+
+	// Check the details of the created auction
+	auction := auctionList[0]
+	uassert.Equal(t, title, auction.Title)
+	uassert.Equal(t, description, auction.Description)
+	uassert.Equal(t, begin, auction.Begin.Unix())
+	uassert.Equal(t, end, auction.End.Unix())
+	uassert.Equal(t, amount, auction.Price.Amount)
+	uassert.Equal(t, denom, auction.Price.Denom)
 }
-
-// Test the Auction realm functionality with global deposit management
-func TestAuctionRealm(t *testing.T) {
-	// Simulate the admin creating an auction
-	adminAddr := std.Address("admin")
-	std.TestSetOrigCaller(adminAddr)
-
-	// Create an auction that starts almost immediately
-	begin := time.Now().Add(1 * time.Second).Unix()
-	end := time.Now().Add(10 * time.Second).Unix()
-	minPrice := std.NewCoin("token", 100)
-
-	// Call the CreateAuction function
-	CreateAuction("Test Auction", "A simple test auction", begin, end, minPrice)
-
-	// Check if auction is listed under 'upcoming' section
-	std.TestSkipHeights(1)
-	updateAuctionStates()
-
-	// Simulate time passing to move the auction to 'ongoing' state
-	std.TestSkipHeights(360) // Fast-forward to the start time of the auction
-	updateAuctionStates()
-
-	// Check if auction is now listed under 'ongoing' section
-	ongoingPage := Render("ongoing")
-	if !strings.Contains(ongoingPage, "Test Auction") {
-		t.Errorf("The auction should be listed in the 'ongoing' section")
-	}
-
-	// Simulate users placing bids
-	user1 := testutils.TestAddress("user1")
-	user2 := testutils.TestAddress("user2")
-
-	// Place a bid from user1
+func TestPlaceBid(t *testing.T) {
+	// Initialize the environment for user1 as the auction creator
 	std.TestSetOrigCaller(user1)
-	AddBid(0, std.NewCoin("token", 200)) // Bid of 200 tokens
+	CreateAuction("Test Auction", "This is a test auction", time.Now().Unix(), time.Now().Add(time.Hour*24).Unix(), 100, "ugnot")
 
-	// Verify that the deposit was recorded in globalDeposits
-	if globalDeposits[user1].Amount != 200 {
-		t.Errorf("User1's deposit should be 200 tokens")
-	}
+	// Switch to user2 as the bidder
+	std.TestSetOrigCaller(user2)                                       // Simulate user2 as the caller
+	std.TestSetOrigSend(std.Coins{{Denom: "ugnot", Amount: 200}}, nil) // Set user2's funds for the transaction
+	// Place a bid of 150 ugnots
+	bidAmount := int64(150)
+	denom := "ugnot"
+	result := PlaceBid(0, bidAmount, denom)
+	uassert.Equal(t, "Bid placed successfully", result)
 
-	// Place a higher bid from user2
-	std.TestSetOrigCaller(user2)
-	AddBid(0, std.NewCoin("token", 300)) // Bid of 300 tokens
-
-	// Verify that the deposit was recorded in globalDeposits
-	if globalDeposits[user2].Amount != 300 {
-		t.Errorf("User2's deposit should be 300 tokens")
-	}
-
-	// Verify the auction details and the highest bid
-	auctionDetails := Render("auction/0")
-	if !strings.Contains(auctionDetails, "300 token") {
-		t.Errorf("The highest bid should be 300 tokens")
-	}
-
-	// Simulate enough time passing for the auction to end
-	std.TestSkipHeights(720) // Skip enough blocks to simulate 5 seconds passing (for the auction to end)
-	updateAuctionStates()
-
-	// Simulate the admin ending the auction
-	std.TestSetOrigCaller(adminAddr)
-	EndAuction(0)
-
-	// Verify that the auction has ended
-	auctionDetails = Render("auction/0")
-	if !strings.Contains(auctionDetails, "Auction ended") {
-		t.Errorf("The auction should be closed")
-	}
-
-	// Verify that user1 was refunded (as the losing bidder)
-	if _, exists := globalDeposits[user1]; exists {
-		t.Errorf("User1's deposit should have been refunded and removed from globalDeposits")
-	}
-
-	// Verify that user2's deposit was transferred to the auction owner
-	if _, exists := globalDeposits[user2]; exists {
-		t.Errorf("User2's deposit should have been transferred to the auction owner and removed from globalDeposits")
-	}
-
-	// Reset the global state after the test
-	resetCurrentTime()
+	// Verify that the bid was successfully recorded in the auction
+	auction := auctionList[0]
+	lastBid := auction.Bids[len(auction.Bids)-1]
+	uassert.Equal(t, bidAmount, lastBid.Amount.Amount)
+	uassert.Equal(t, user2, lastBid.Bidder)
 }
 
-// Updates the auction states based on the current time
-func updateAuctionStates() {
-	now := time.Now()
-	for _, auc := range auctionList {
-		if auc.State == "upcoming" && now.After(auc.Begin) {
-			auc.State = "ongoing"
-		} else if auc.State == "ongoing" && now.After(auc.End) {
-			auc.State = "closed"
-		}
-	}
+func TestEndAuction(t *testing.T) {
+	// Set user1 as the auction creator
+	std.TestSetOrigCaller(user1)
+	CreateAuction("Test Auction", "This is a test auction", time.Now().Add(-2*time.Hour).Unix(), time.Now().Add(1*time.Hour).Unix(), 100, "ugnot")
+
+	// Place a bid with user2 before auction ends
+	std.TestSetOrigCaller(user2)
+	std.TestIssueCoins(user2, std.Coins{{Denom: "ugnot", Amount: 200}})
+	std.TestSetOrigSend(std.Coins{{Denom: "ugnot", Amount: 150}}, nil)
+
+	// Place the bid while auction is active
+	result := PlaceBid(0, 150, "ugnot")
+	uassert.Equal(t, "Bid placed successfully", result)
+
+	// Simulate time progression after the bid
+	std.TestSkipHeights(2000) // Advance time to pass the auction's end time
+
+	// End the auction
+	std.TestSetOrigCaller(user1) // Set user1's realm
+	result = EndAuction(0)
+	uassert.Equal(t, "Auction ended successfully", result)
+
+	// Verify the highest bidder
+	auction := auctionList[0]
+	highestBid := auction.Bids[len(auction.Bids)-1]
+	uassert.Equal(t, user2, highestBid.Bidder)
+	uassert.Equal(t, int64(150), highestBid.Amount.Amount)
 }
