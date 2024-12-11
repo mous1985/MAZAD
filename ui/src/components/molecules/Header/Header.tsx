@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircleIcon } from '@chakra-ui/icons';
 import Connect from '../../atoms/Connect/Connect';
 import AccountContext from '../../../context/AccountContext.ts';
+import ThemeToggle from '../../atoms/Connect/ThemeToggle'; // Import du composant ThemeToggle
 
 const Header = () => {
   const { address } = useContext(AccountContext);
@@ -25,6 +26,7 @@ const Header = () => {
       left="0"
       zIndex="1000"
     >
+      {/* Logo et lien vers la page d'accueil */}
       <Box display="flex" alignItems="center">
         <Link to="/">
           <Text fontSize="xl" fontWeight="bold">
@@ -32,11 +34,17 @@ const Header = () => {
           </Text>
         </Link>
       </Box>
+
+      {/* Section à droite : connexion et bascule de thème */}
       <Box display="flex" alignItems="center">
+        {/* Composant ThemeToggle */}
+        <ThemeToggle />
+
+        {/* Gestion de la connexion */}
         {!address ? (
           <Connect />
         ) : (
-          <Box display="flex" alignItems="center">
+          <Box display="flex" alignItems="center" ml={4}>
             <CheckCircleIcon color="green.500" mr={2} />
             <Text>CONNECTED</Text>
           </Box>

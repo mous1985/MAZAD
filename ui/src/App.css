@@ -1,8 +1,5 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  @apply max-w-screen-lg mx-auto p-8 text-center; /* Utilisation de Tailwind */
 }
 
 .logo {
@@ -24,7 +21,6 @@
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
@@ -36,16 +32,14 @@
   }
 }
 
-.card {
-  padding: 2em;
-}
-
 .read-the-docs {
   color: #888;
 }
 
-.main-content {
-  margin-top: 60px;
-  width: 100%;
+.card {
+  @apply p-8; /* Remplacé par Tailwind */
+}
 
+.main-content {
+  @apply mt-16 w-full; /* Remplacé par Tailwind */
 }

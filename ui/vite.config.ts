@@ -1,7 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import svgr from 'vite-plugin-svgr';
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
+
+// Configuration Vite
 export default defineConfig({
-  plugins: [react(), svgr(), nodePolyfills()]
+  plugins: [react()],
+  css: {
+    postcss: {
+      plugins: [tailwindcss(), autoprefixer()],
+    },
+  },
 });
